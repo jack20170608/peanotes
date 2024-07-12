@@ -1,0 +1,9 @@
+[
+  {
+    "listOfId" : [ 1, 2, 3 ],
+    "userId" : 100,
+    "minCreateDt" : "2011-01-01 01:01:01.000",
+    "maxCreateDt" : "2033-03-03 03:03:03.000",
+    "uriPrefix" : "foo/bar"
+  }
+]

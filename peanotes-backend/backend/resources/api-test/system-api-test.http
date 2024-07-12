@@ -1,0 +1,14 @@
+### 1.0 query system param with first page
+GET {{baseUrl}}/system/api/v1/param/queryWithKeyword?keyword=peanote&page=0&pageSize=10&sortBy=PARAM_NAME&direction=ASC
+accept: application/json
+
+
+### 1.1 put system param with given
+PUT {{baseUrl}}/system/api/v1/param/put?paramName=theme&paramValue=dark&paramDesc=the system theme
+Content-Type: application/json
+Accept: application/json
+
+
+
+
+

@@ -1,0 +1,72 @@
+package top.ilovemyhome.peanotes.backend.web.dto.article.response;
+
+
+import java.io.Serializable;
+import java.util.List;
+
+
+public class ArticleInfoSimpleResponseDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * ID
+     */
+    private Long id;
+    /**
+     * 文件夹ID
+     */
+    private Long pid;
+    /**
+     * 文章名称
+     */
+    private String name;
+    /**
+     * 文章图标
+     */
+    private String icon;
+    /**
+     * 标签集合
+     */
+    private List<String> tags;
+    /**
+     * 封面
+     */
+    private String cover;
+    /**
+     * 描述
+     */
+    private String describes;
+    /**
+     * star状态
+     */
+    private Integer starStatus;
+    /**
+     * 公开状态
+     */
+    private Integer openStatus;
+    /**
+     * 页面的查看数
+     */
+    private Integer pv;
+    /**
+     * 独立的访问次数,每日IP重置
+     */
+    private Integer uv;
+    /**
+     * 点赞数
+     */
+    private Integer likes;
+    /**
+     * 文章字数
+     */
+    private Integer words;
+    /**
+     * 版本
+     */
+    private Integer version;
+    /**
+     * 颜色
+     */
+    private String color;
+}

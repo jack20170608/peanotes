@@ -1,0 +1,8 @@
+{
+  "namespace": "@project.groupId@",
+  "component": "@project.artifactId@",
+  "displayName": "@project.name@",
+  "description": "@project.description@",
+  "version": "@project.version@",
+  "scmUrl": "@scm.url@"
+}

@@ -1,0 +1,17 @@
+### 1. try to login
+POST {{gateway-url}}/doLogin
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="name"
+
+sa
+--WebAppBoundary--
+Content-Disposition: form-data; name="pwd"
+
+123456
+--WebAppBoundary--
+
+
+###
+
