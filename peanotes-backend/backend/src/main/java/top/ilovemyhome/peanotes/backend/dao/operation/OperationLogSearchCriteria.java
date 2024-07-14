@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import top.ilovemyhome.peanotes.backend.common.Constants;
 import top.ilovemyhome.peanotes.backend.common.db.dao.common.SearchCriteria;
+import top.ilovemyhome.peanotes.backend.common.db.dao.page.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -104,6 +105,11 @@ public class OperationLogSearchCriteria implements SearchCriteria {
     @Override
     public Map<String, List> listParam() {
         return ImmutableMap.copyOf(listParameters);
+    }
+
+    @Override
+    public String pageableWhereClause(Pageable pageable) {
+        return "";
     }
 
     public static Builder builder() {

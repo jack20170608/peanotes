@@ -1,7 +1,5 @@
 package top.ilovemyhome.peanotes.backend.common.db.dao.common;
 
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.SearchCriteria;
-
 import java.util.List;
 import java.util.Map;
 

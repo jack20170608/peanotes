@@ -2,28 +2,32 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>top.ilovemyhome</groupId>
         <artifactId>peanotes-backend</artifactId>
         <version>${revision}</version>
     </parent>
 
-    <version>${revision}</version>
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>backend</artifactId>
-    <name>backend</name>
-
-    <description>The peanotes backend service.</description>
-    <scm>
-        <url>http://192.168.0.188:9199/jack/peanotes.git</url>
-        <developerConnection>mailto:jack@ilovemyhome.top</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
+    <groupId>top.ilovemyhome.peanotes</groupId>
+    <artifactId>api-autotest</artifactId>
 
     <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>io.muserver</groupId>
+            <artifactId>mu-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.intuit.karate</groupId>
+            <artifactId>karate-core</artifactId>
+            <version>1.4.1</version>
+        </dependency>
 
         <!-- the internal dependencies -->
         <dependency>
@@ -34,27 +38,11 @@
             <groupId>top.ilovemyhome</groupId>
             <artifactId>common-db</artifactId>
         </dependency>
-
         <!-- the thrid party dependencies -->
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        <!-- the web -->
-        <dependency>
-            <groupId>io.muserver</groupId>
-            <artifactId>mu-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.hsbc.cranker</groupId>
-            <artifactId>cranker-connector</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.jakarta.rs</groupId>
             <artifactId>jackson-jakarta-rs-json-provider</artifactId>
@@ -84,7 +72,6 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -116,6 +103,7 @@
                 </configuration>
             </plugin>
         </plugins>
+
     </build>
 
 </project>

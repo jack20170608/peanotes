@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.backend.common.config.ConfigLoader;
+import top.ilovemyhome.peanotes.backend.common.db.utils.TestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,12 +21,9 @@ import static top.ilovemyhome.peanotes.backend.common.utils.LocalDateUtils.toLoc
 public class SimpleDataSourceFactoryTest {
 
     @BeforeAll
-    public static void initConfig() {
-        config = ConfigLoader.loadConfig("config/common-db.conf"
-            , "config/common-db-test.conf");
-        dataSourceFactory = SimpleDataSourceFactory.getInstance(config);
+    public static void setup() {
+        dataSourceFactory = TestUtils.getDataSourceFactory();
     }
-
 
     @Test
     public void test() {
@@ -72,16 +70,24 @@ public class SimpleDataSourceFactoryTest {
     public void testAopTransactionSample() {
         Jdbi jdbi = dataSourceFactory.getJdbi();
         HandleCallback<Integer, RuntimeException> handleCallback = h -> {
+            int result = h.execute("insert into t_sys_param(param_name, param_value, param_desc)" +
+                " values(?,?,?)", "jack", "jack888", "testString");
+            LOGGER.info("Result is {}", result);
+
             Update update = h.createUpdate("update t_sys_param set param_value = :v where param_name = :n");
             update.bind("v", "jack666");
             update.bind("n", "jack");
-            return update.execute();
+            result = update.execute();
+
+            String version = h.createQuery("select version1() as version").mapTo(String.class).one();
+            LOGGER.info("version is {}", version);
+            return result;
         };
         int updateRows = jdbi.inTransaction(handleCallback);
         LOGGER.info("updateRows is {}.", updateRows);
     }
 
-    private static Config config;
     private static SimpleDataSourceFactory dataSourceFactory;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceFactoryTest.class);
 }

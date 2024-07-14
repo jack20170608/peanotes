@@ -1,6 +1,6 @@
 package top.ilovemyhome.peanotes.backend.common.db.dao.common;
 
-
+import org.jdbi.v3.core.HandleCallback;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Page;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Pageable;
 
@@ -17,7 +17,11 @@ public interface BaseDao<T> {
 
     Long create(T entity);
 
+    HandleCallback<Long, RuntimeException> invokeCreate(T entity);
+
     int update(Long id, T entity);
+
+    int update(String sql, Map<String, Object> params, Map<String, List> listParam);
 
     Iterable<T> save(Iterable<T> entities);
 

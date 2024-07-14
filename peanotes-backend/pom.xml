@@ -42,6 +42,7 @@
         <module>api-gateway</module>
         <module>backend</module>
         <module>keepie</module>
+        <module>api-autotest</module>
     </modules>
 
     <repositories>

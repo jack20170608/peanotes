@@ -3,6 +3,7 @@ package top.ilovemyhome.peanotes.backend.common.utils;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.util.Objects;
 
 public final class StringConvertUtils {
 
@@ -166,6 +167,9 @@ public final class StringConvertUtils {
     }
 
     public static String[] toStrArray(String split, String str) {
+        if (Objects.isNull(str) || Objects.isNull(split)){
+            return null;
+        }
         return str.split(split);
     }
 

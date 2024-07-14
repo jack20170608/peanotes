@@ -1,6 +1,5 @@
 package top.ilovemyhome.peanotes.backend.common.db.dao.common.impl;
 
-import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Query;
@@ -28,9 +27,15 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
 
     @Override
     public Long create(T entity) {
+        HandleCallback<Long, RuntimeException> callback = invokeCreate(entity);
+        return jdbi.withHandle(callback);
+    }
+
+    @Override
+    public HandleCallback<Long, RuntimeException> invokeCreate(T entity) {
         String sql = sqlGenerator.create(table);
         LOGGER.info("Create SQL=[{}].", sql);
-        HandleCallback<Long, RuntimeException> callback = h -> {
+        return h -> {
             Long result = null;
             Update update = h.createUpdate(sql)
                 .bindBean("t", entity);
@@ -43,8 +48,8 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
             }
             return result;
         };
-       return jdbi.withHandle(callback);
     }
+
 
     @Override
     public int update(Long id, T entity) {
@@ -55,6 +60,21 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
             .bind("id", id)
             .execute();
         return jdbi.withHandle(callback);
+    }
+
+    @Override
+    public int update(final String sql, final Map<String, Object> params, final Map<String, List> listParam) {
+        LOGGER.info("Update sql=[{}].", sql);
+        return jdbi.withHandle(handle -> {
+            Update update = handle.createUpdate(sql);
+            if (Objects.nonNull(listParam)) {
+                listParam.forEach(update::bindList);
+            }
+            if (Objects.nonNull(params)) {
+                params.forEach(update::bind);
+            }
+            return update.execute();
+        });
     }
 
     @Override
@@ -110,8 +130,12 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
         LOGGER.info("Find sql=[{}].", sql);
         return (List<T>) jdbi.withHandle(handle -> {
             Query query = handle.createQuery(sql);
-            listParam.forEach(query::bindList);
-            params.forEach(query::bind);
+            if (Objects.nonNull(listParam)) {
+                listParam.forEach(query::bindList);
+            }
+            if (Objects.nonNull(params)) {
+                params.forEach(query::bind);
+            }
             return query.mapTo(getEntityType()).list();
         });
     }
@@ -129,8 +153,12 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
         LOGGER.info("Count sql=[{}].", sql);
         return jdbi.withHandle(handle -> {
             Query query = handle.createQuery(sql);
-            listParam.forEach(query::bindList);
-            params.forEach(query::bind);
+            if (Objects.nonNull(listParam)) {
+                listParam.forEach(query::bindList);
+            }
+            if (Objects.nonNull(params)) {
+                params.forEach(query::bind);
+            }
             return query.mapTo(Long.class).one();
         });
     }
