@@ -13,16 +13,15 @@ public interface SearchCriteria extends Serializable {
     String whereClause();
 
     default Map<String, Object> normalParams() {
-        return Map.of();
+        return null;
     }
 
     default Map<String, List> listParam() {
-        return Map.of();
+        return null;
     }
 
-
     default String pageableWhereClause(Pageable pageable) {
-        return "";
+        return null;
     }
 
 }

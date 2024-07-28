@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements BaseDao<T> {
+public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
 
     public abstract void registerRowMappers(Jdbi jdbi);
 
@@ -44,7 +44,7 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
                     .mapTo(Long.class)
                     .one();
             } else {
-                update.execute();
+                result = (long) update.execute();
             }
             return result;
         };
@@ -63,16 +63,21 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
     }
 
     @Override
-    public int update(final String sql, final Map<String, Object> params, final Map<String, List> listParam) {
+    public int update(String sql, Map<String, Object> params) {
+        return update(sql, params, null);
+    }
+
+    @Override
+    public int update(String sql, Map<String, Object> params, Map<String, List> listParam) {
+        return update(sql, params, listParam, null);
+    }
+
+    @Override
+    public int update(final String sql, final Map<String, Object> params, final Map<String, List> listParam, final Map<String, Object> beanParam) {
         LOGGER.info("Update sql=[{}].", sql);
         return jdbi.withHandle(handle -> {
             Update update = handle.createUpdate(sql);
-            if (Objects.nonNull(listParam)) {
-                listParam.forEach(update::bindList);
-            }
-            if (Objects.nonNull(params)) {
-                params.forEach(update::bind);
-            }
+            bindParamsForUpdate(update, params, listParam, beanParam);
             return update.execute();
         });
     }
@@ -94,6 +99,11 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
             .bind("listOfid", listOfId)
             .execute();
         return jdbi.withHandle(callback);
+    }
+
+    @Override
+    public int delete(String sql, Map<String, Object> params, Map<String, List> listParam) {
+        return update(sql, params, listParam);
     }
 
     @Override
@@ -130,12 +140,7 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
         LOGGER.info("Find sql=[{}].", sql);
         return (List<T>) jdbi.withHandle(handle -> {
             Query query = handle.createQuery(sql);
-            if (Objects.nonNull(listParam)) {
-                listParam.forEach(query::bindList);
-            }
-            if (Objects.nonNull(params)) {
-                params.forEach(query::bind);
-            }
+            bindParamsForQuery(query, params, listParam);
             return query.mapTo(getEntityType()).list();
         });
     }
@@ -153,12 +158,7 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
         LOGGER.info("Count sql=[{}].", sql);
         return jdbi.withHandle(handle -> {
             Query query = handle.createQuery(sql);
-            if (Objects.nonNull(listParam)) {
-                listParam.forEach(query::bindList);
-            }
-            if (Objects.nonNull(params)) {
-                params.forEach(query::bind);
-            }
+            bindParamsForQuery(query, params, listParam);
             return query.mapTo(Long.class).one();
         });
     }
@@ -168,6 +168,17 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
     public List<T> find(SearchCriteria searchCriteria) {
         String sql = sqlGenerator.select(table, searchCriteria);
         return find(sql, searchCriteria.normalParams(), searchCriteria.listParam());
+    }
+
+    @Override
+    public List<Long> findIds(SearchCriteria searchCriteria) {
+        String sql = String.format("select %s from %s", table.getIdField(), table.getFromClause())
+            + searchCriteria.whereClause();
+        return jdbi.withHandle(handle -> {
+            Query query = handle.createQuery(sql);
+            bindParamsForQuery(query, searchCriteria.normalParams(), searchCriteria.listParam());
+            return query.mapTo(Long.class).list();
+        });
     }
 
     @Override
@@ -236,6 +247,27 @@ public abstract class BaseDaoJdbiImpl<T extends Persistable<Long>> implements Ba
 
     private Type getEntityType() {
         return ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+    }
+
+    private void bindParamsForUpdate(Update update, Map<String, Object> params, Map<String, List> listParam, Map<String, Object> beanParam) {
+        if (Objects.nonNull(listParam) && !listParam.isEmpty()) {
+            listParam.forEach(update::bindList);
+        }
+        if (Objects.nonNull(params) && !params.isEmpty()) {
+            params.forEach(update::bind);
+        }
+        if (Objects.nonNull(beanParam) && !beanParam.isEmpty()) {
+            beanParam.forEach(update::bindBean);
+        }
+    }
+
+    private void bindParamsForQuery(Query query, Map<String, Object> params, Map<String, List> listParam) {
+        if (Objects.nonNull(listParam) && !listParam.isEmpty()) {
+            listParam.forEach(query::bindList);
+        }
+        if (Objects.nonNull(params) && !params.isEmpty()) {
+            params.forEach(query::bind);
+        }
     }
 
     protected BaseDaoJdbiImpl(TableDescription table, Jdbi jdbi) {

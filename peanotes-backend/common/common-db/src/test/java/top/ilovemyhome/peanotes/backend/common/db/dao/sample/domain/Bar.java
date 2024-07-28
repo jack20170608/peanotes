@@ -1,6 +1,5 @@
 package top.ilovemyhome.peanotes.backend.common.db.dao.sample.domain;
 
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.Persistable;
 
 import java.util.Collections;
 import java.util.Map;
@@ -8,7 +7,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Bar implements Persistable<Long> {
+public class Bar {
 
     private Long id;
     private String name;
@@ -71,15 +70,10 @@ public class Bar implements Persistable<Long> {
         return others;
     }
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    @Override
-    public boolean isNew() {
-        return false;
-    }
 
     @Override
     public boolean equals(Object o) {

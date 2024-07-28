@@ -1,6 +1,5 @@
 package top.ilovemyhome.peanotes.backend.common.db.dao.sample.domain;
 
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.Persistable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,7 +9,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Foo implements Persistable<Long> {
+public class Foo {
 
     public enum Field {
         id("ID", true),
@@ -102,15 +101,10 @@ public class Foo implements Persistable<Long> {
         this.id = id;
     }
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    @Override
-    public boolean isNew() {
-        return false;
-    }
 
     public static Builder builder() {
         return new Builder();

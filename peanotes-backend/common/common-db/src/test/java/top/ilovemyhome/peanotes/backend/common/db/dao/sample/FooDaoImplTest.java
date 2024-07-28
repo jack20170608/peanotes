@@ -61,6 +61,9 @@ public class FooDaoImplTest {
         List<Foo> fooList = fooDao.find(jackSearch);
         assertThat(fooList.size()).isEqualTo(5);
 
+        List<Long> allIds = fooDao.findIds(jackSearch);
+        assertThat(allIds.size()).isEqualTo(5);
+
         SearchCriteria fooSearchCriteria = new SearchCriteria() {
             @Override
             public String whereClause() {

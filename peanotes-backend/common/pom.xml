@@ -20,6 +20,7 @@
         <module>common-oss</module>
         <module>common-http</module>
         <module>common-security</module>
+        <module>common-task</module>
     </modules>
 
 </project>

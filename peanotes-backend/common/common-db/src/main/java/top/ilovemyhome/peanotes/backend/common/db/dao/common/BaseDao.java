@@ -21,7 +21,11 @@ public interface BaseDao<T> {
 
     int update(Long id, T entity);
 
-    int update(String sql, Map<String, Object> params, Map<String, List> listParam);
+    int update(String sql, final Map<String, Object> params);
+
+    int update(String sql, final Map<String, Object> params, final Map<String, List> listParam);
+
+    int update(String sql, final Map<String, Object> params, final Map<String, List> listParam, final Map<String, Object> beanParam);
 
     Iterable<T> save(Iterable<T> entities);
 
@@ -35,6 +39,8 @@ public interface BaseDao<T> {
 
     List<T> find(String sql, Map<String, Object> params, Map<String, List> listParam);
 
+    List<Long> findIds(SearchCriteria searchCriteria);
+
     Long count(SearchCriteria searchCriteria);
     Long count(String sql, Map<String, Object> params, Map<String, List> listParam);
 
@@ -47,6 +53,8 @@ public interface BaseDao<T> {
     int delete(Long id);
 
     int delete(List<Long> listOfId);
+
+    int delete(final String sql, final Map<String, Object> params, final Map<String, List> listParam);
 
     void deleteAll();
 
