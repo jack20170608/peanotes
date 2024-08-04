@@ -1,14 +1,27 @@
 package top.ilovemyhome.peanotes.backend.common.task;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import top.ilovemyhome.peanotes.backend.common.Constants;
+
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 //persist object
+@JsonDeserialize(builder = TaskRecord.Builder.class)
 public final class TaskRecord {
 
     private Long id;
@@ -21,15 +34,29 @@ public final class TaskRecord {
     private String output;
     private boolean async;
     private boolean dummy;
+
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime createDt;
+
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime lastUpdateDt;
 
     private TaskStatus status;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime startDt;
+
+
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime endDt;
+
     private boolean success;
     private String failReason;
-
+    private Long timeout;
+    private TimeUnit timeoutUnit;
 
     public enum Field {
         id("ID", true),
@@ -48,7 +75,9 @@ public final class TaskRecord {
         startDt("START_DT"),
         endDt("END_DT"),
         success("SUCCESS"),
-        failReason("FAIL_REASON");
+        failReason("FAIL_REASON"),
+        timeout("TIMEOUT"),
+        timeoutUnit("TIMEOUT_UNIT");
 
         private final String dbColumn;
         private final boolean isId;
@@ -80,6 +109,10 @@ public final class TaskRecord {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getOrderKey() {
@@ -146,6 +179,15 @@ public final class TaskRecord {
         return successorIds;
     }
 
+    public Long getTimeout() {
+        return timeout;
+    }
+
+    public TimeUnit getTimeoutUnit() {
+        return timeoutUnit;
+    }
+
+    @JsonIgnore
     public String getSuccessorIdStr() {
         if (successorIds == null || successorIds.isEmpty()) {
             return null;
@@ -157,7 +199,11 @@ public final class TaskRecord {
         return new Builder();
     }
 
+    @JsonPOJOBuilder()
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
+        private Long timeout;
+        private TimeUnit timeoutUnit;
         private String failReason;
         private boolean success;
         private LocalDateTime endDt;
@@ -179,6 +225,15 @@ public final class TaskRecord {
         private Builder() {
         }
 
+        public Builder withTimeout(Long timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public Builder withTimeoutUnit(TimeUnit timeoutUnit) {
+            this.timeoutUnit = timeoutUnit;
+            return this;
+        }
 
         public Builder withFailReason(String failReason) {
             this.failReason = failReason;
@@ -190,11 +245,15 @@ public final class TaskRecord {
             return this;
         }
 
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withEndDt(LocalDateTime endDt) {
             this.endDt = endDt;
             return this;
         }
 
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withStartDt(LocalDateTime startDt) {
             this.startDt = startDt;
             return this;
@@ -205,11 +264,15 @@ public final class TaskRecord {
             return this;
         }
 
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withLastUpdateDt(LocalDateTime lastUpdateDt) {
             this.lastUpdateDt = lastUpdateDt;
             return this;
         }
 
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withCreateDt(LocalDateTime createDt) {
             this.createDt = createDt;
             return this;
@@ -266,12 +329,13 @@ public final class TaskRecord {
         }
 
         public TaskRecord build() {
+            LocalDateTime now = LocalDateTime.now();
             TaskRecord taskRecord = new TaskRecord();
             taskRecord.executionKey = this.executionKey;
             taskRecord.name = this.name;
             taskRecord.failReason = this.failReason;
             taskRecord.status = this.status;
-            taskRecord.lastUpdateDt = this.lastUpdateDt;
+            taskRecord.lastUpdateDt = Objects.isNull(this.lastUpdateDt) ? now : this.lastUpdateDt;
             taskRecord.output = this.output;
             taskRecord.input = this.input;
             taskRecord.successorIds = this.successorIds;
@@ -281,9 +345,11 @@ public final class TaskRecord {
             taskRecord.endDt = this.endDt;
             taskRecord.id = this.id;
             taskRecord.dummy = this.dummy;
-            taskRecord.createDt = this.createDt;
+            taskRecord.createDt = Objects.isNull(this.createDt) ? now : this.createDt;
             taskRecord.orderKey = this.orderKey;
             taskRecord.async = this.async;
+            taskRecord.timeout = this.timeout;
+            taskRecord.timeoutUnit = this.timeoutUnit;
             return taskRecord;
         }
     }

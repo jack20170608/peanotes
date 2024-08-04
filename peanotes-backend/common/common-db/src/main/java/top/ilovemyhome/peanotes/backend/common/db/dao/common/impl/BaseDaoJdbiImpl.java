@@ -147,19 +147,19 @@ public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
 
     @Override
     public Page<T> find(SearchCriteria searchCriteria, Pageable page) {
-        Long total = count(searchCriteria);
+        int total = count(searchCriteria);
         String sql = sqlGenerator.select(table, searchCriteria, page);
         List<T> pagedResult = find(sql, searchCriteria.normalParams(), searchCriteria.listParam());
         return new PageImpl<>(pagedResult, page, total);
     }
 
     @Override
-    public Long count(String sql, Map<String, Object> params, Map<String, List> listParam) {
+    public int count(String sql, Map<String, Object> params, Map<String, List> listParam) {
         LOGGER.info("Count sql=[{}].", sql);
         return jdbi.withHandle(handle -> {
             Query query = handle.createQuery(sql);
             bindParamsForQuery(query, params, listParam);
-            return query.mapTo(Long.class).one();
+            return query.mapTo(Integer.class).one();
         });
     }
 
@@ -182,7 +182,7 @@ public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
     }
 
     @Override
-    public Long count(SearchCriteria searchCriteria) {
+    public int count(SearchCriteria searchCriteria) {
         String sql = sqlGenerator.count(table, searchCriteria);
         return count(sql, searchCriteria.normalParams(), searchCriteria.listParam());
     }

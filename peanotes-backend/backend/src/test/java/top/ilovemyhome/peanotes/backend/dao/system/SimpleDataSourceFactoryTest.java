@@ -49,10 +49,10 @@ public class SimpleDataSourceFactoryTest {
 
     @Test
     public void testMapper(){
-        String whereCondition = " where param_name like :keyword or param_value like :keyword or param_desc like :keyword";
+        String whereCondition = " where param_name like :keyword or param_value like :keyword or param_desc like '%'||:keyword||'%'";
         String pageSql = "SELECT * FROM t_sys_param" + whereCondition + " ORDER BY ID ASC LIMIT 100 OFFSET 0";
         String countSql = "SELECT COUNT(*) FROM t_sys_param" + whereCondition;
-        String keyword = "%peanote%";
+        String keyword = "peanote";
         Long count = jdbi.withHandle(handle -> handle.select(countSql)
             .bind("keyword",keyword)
             .mapTo(Long.class).one());
@@ -74,7 +74,6 @@ public class SimpleDataSourceFactoryTest {
         Handle handle = null;
         try {
             handle = jdbi.open();
-            systemParamDao.attachHandler(handle);
             long total = systemParamDao.countAll();
             LOGGER.info("Total is {}.", total);
             Long id = systemParamDao.create(SystemParamEntity.builder()
@@ -90,7 +89,6 @@ public class SimpleDataSourceFactoryTest {
             if (handle != null){
                 handle.close();
             }
-            systemParamDao.dettachHandler();
         }
     }
 
@@ -101,7 +99,6 @@ public class SimpleDataSourceFactoryTest {
         Handle handle = null;
         try {
             handle = jdbi.open();
-            systemParamDao.attachHandler(handle);
             long total = systemParamDao.countAll();
             LOGGER.info("Total is {}.", total);
             Long id = systemParamDao.create(SystemParamEntity.builder()
@@ -120,7 +117,6 @@ public class SimpleDataSourceFactoryTest {
             if (handle != null){
                 handle.close();
             }
-            systemParamDao.dettachHandler();
         }
     }
 

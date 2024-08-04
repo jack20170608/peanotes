@@ -34,6 +34,10 @@
             <groupId>top.ilovemyhome</groupId>
             <artifactId>common-db</artifactId>
         </dependency>
+        <dependency>
+            <groupId>top.ilovemyhome</groupId>
+            <artifactId>common-task</artifactId>
+        </dependency>
 
         <!-- the thrid party dependencies -->
         <dependency>

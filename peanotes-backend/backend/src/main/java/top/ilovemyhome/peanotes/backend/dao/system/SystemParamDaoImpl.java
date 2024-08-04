@@ -14,7 +14,7 @@ public class SystemParamDaoImpl extends BaseDaoJdbiImpl<SystemParamEntity> imple
     public SystemParamDaoImpl(AppContext appContext) {
         super(TableDescription.builder()
             .withName("t_sys_param")
-            .withIdFields(SystemParamEntity.ID_FIELDS)
+            .withIdField(SystemParamEntity.ID_FIELD)
             .withFieldColumnMap(SystemParamEntity.FIELD_COLUMN_MAP)
             .withIdAutoGenerate(true)
             .build(), appContext.getDataSourceFactory().getJdbi());

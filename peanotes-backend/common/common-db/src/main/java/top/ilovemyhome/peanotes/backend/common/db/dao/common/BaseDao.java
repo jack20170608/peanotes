@@ -41,8 +41,8 @@ public interface BaseDao<T> {
 
     List<Long> findIds(SearchCriteria searchCriteria);
 
-    Long count(SearchCriteria searchCriteria);
-    Long count(String sql, Map<String, Object> params, Map<String, List> listParam);
+    int count(SearchCriteria searchCriteria);
+    int count(String sql, Map<String, Object> params, Map<String, List> listParam);
 
     List<T> findAll();
 

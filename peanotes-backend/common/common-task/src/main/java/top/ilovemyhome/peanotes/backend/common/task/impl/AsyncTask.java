@@ -10,7 +10,7 @@ import static top.ilovemyhome.peanotes.backend.common.task.impl.TaskHelper.creat
 
 public class AsyncTask<I, O> extends Task<I, O> {
 
-    public AsyncTask(Long id, TaskContext<I, O> taskContext, String orderKey, String name, TaskInput<I> input
+    public AsyncTask(Long id, TaskContext taskContext, String orderKey, String name, TaskInput<I> input
         , Long timeout, TimeUnit timeoutUnit, TaskExecution<I, O> taskExecution) {
         super(id, taskContext, orderKey, name, input, timeout, timeoutUnit, taskExecution);
     }

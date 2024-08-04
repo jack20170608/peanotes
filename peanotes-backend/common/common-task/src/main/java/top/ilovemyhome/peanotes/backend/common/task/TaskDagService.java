@@ -1,24 +1,34 @@
 package top.ilovemyhome.peanotes.backend.common.task;
 
 
-import top.ilovemyhome.peanotes.backend.common.task.impl.Task;
-
 import java.util.List;
 
-public interface TaskDagService<I, O> {
+public interface TaskDagService {
+    //1.0 task order management
+    boolean isOrdered(String orderKey);
+    boolean isOrdered(SimpleTaskOrder taskOrder);
+    Long createOrder(SimpleTaskOrder taskOrder);
+    int updateOrderByKey(String orderKey, SimpleTaskOrder taskOrder);
+    int deleteOrderByKey(String orderKey, boolean caseCade);
 
-    boolean isOrdered(TaskOrder order);
+    //2.0 task record management
+    List<TaskRecord> getByIds(List<Long> listOfId);
+    List<Long> getNextTaskIds(int count);
+    List<Long> createTasks(List<TaskRecord> records);
+    List<TaskRecord> findTaskByOrderKey(String orderKey);
+    int countTaskByOrderKey(String orderKey);
+    int deleteTaskByOrderKey(String orderKey);
 
-    List<Task<I, O>> order(TaskOrder order);
+    //3.0 runtime related
+    void load(SimpleTaskOrder order);
 
-    void start(TaskOrder order);
+    void start(SimpleTaskOrder order);
 
-    List<Task<I, O>> orderAndStart(TaskOrder order);
+    void loadAndStart(String orderKey);
+    void loadAndStart(SimpleTaskOrder order);
 
-    boolean isSuccess(TaskOrder order);
+    boolean isSuccess(SimpleTaskOrder order);
 
-    List<Task<I, O>> checkStatus(TaskOrder order);
-
-    void receiveTaskEvent(Long taskId, TaskStatus newStatus, TaskOutput<O> output);
+    <I,O> void receiveTaskEvent(Long taskId, TaskStatus newStatus, TaskOutput<O> output);
 
 }

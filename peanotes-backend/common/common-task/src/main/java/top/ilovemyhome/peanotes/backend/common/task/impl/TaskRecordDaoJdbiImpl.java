@@ -11,10 +11,7 @@ import top.ilovemyhome.peanotes.backend.common.task.*;
 import top.ilovemyhome.peanotes.backend.common.utils.StringConvertUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -24,20 +21,21 @@ import static top.ilovemyhome.peanotes.backend.common.utils.LocalDateUtils.toLoc
 import static top.ilovemyhome.peanotes.backend.common.utils.StringConvertUtils.toEnum;
 import static top.ilovemyhome.peanotes.backend.common.utils.StringConvertUtils.toStrArray;
 
-public abstract class TaskRecordDaoJdbiImpl<I, O> extends BaseDaoJdbiImpl<TaskRecord>
-    implements TaskRecordDao<I, O>, TaskDao<I, O> {
+public class TaskRecordDaoJdbiImpl extends BaseDaoJdbiImpl<TaskRecord>
+    implements TaskRecordDao {
 
     private static final String DEFAULT_TASK_TABLE_NAME = "t_task";
     private static final String DEFAULT_ID_SEQ_NAME = "seq_t_task_id";
 
-    protected TaskRecordDaoJdbiImpl(TaskContext<I,O> taskContext, Jdbi jdbi) {
+    public TaskRecordDaoJdbiImpl(TaskContext taskContext) {
         super(TableDescription.builder()
             .withName(DEFAULT_TASK_TABLE_NAME)
             .withFieldColumnMap(TaskRecord.FIELD_COLUMN_MAP)
             .withIdField(TaskRecord.ID_FIELD)
             .withIdAutoGenerate(false)
-            .build(), jdbi);
+            .build(), taskContext.getJdbi());
         this.taskContext = taskContext;
+        this.taskContext.setTaskRecordDao(this);
     }
 
     @Override
@@ -64,6 +62,8 @@ public abstract class TaskRecordDaoJdbiImpl<I, O> extends BaseDaoJdbiImpl<TaskRe
                 .withEndDt(toLocalDateTime(rs.getTimestamp(TaskRecord.Field.endDt.getDbColumn())))
                 .withSuccess(rs.getBoolean(TaskRecord.Field.success.getDbColumn()))
                 .withFailReason(rs.getString(TaskRecord.Field.failReason.getDbColumn()))
+                .withTimeout(rs.getLong(TaskRecord.Field.timeout.getDbColumn()))
+                .withTimeoutUnit(toEnum(TimeUnit.class, rs.getString(TaskRecord.Field.timeoutUnit.getDbColumn())))
                 .build();
         });
     }
@@ -76,15 +76,36 @@ public abstract class TaskRecordDaoJdbiImpl<I, O> extends BaseDaoJdbiImpl<TaskRe
     }
 
     @Override
-    public List<Task<I, O>> loadTaskForOrder(String orderKey) {
-        String sql = getCachedSql(SqlGenerator.SQL_STATEMENT.selectAll)
-            + " where ORDER_ID = :orderId ";
-        List<TaskRecord> taskRecordList = find(sql, Map.of("orderId", orderKey), null);
-        return taskRecordList.stream().map(this::toTask).collect(Collectors.toList());
+    public int deleteByOrderKey(String orderKey) {
+        String sql = getCachedSql(SqlGenerator.SQL_STATEMENT.deleteAll)
+            + " where ORDER_KEY = :orderKey ";
+        return update(sql, Map.of("orderKey", orderKey), null);
     }
 
     @Override
-    public int createTasksForOrder(String orderKey, List<Task<I, O>> listOfTask) {
+    public <I, O> List<Task<I, O>> loadTaskForOrder(String orderKey) {
+        String sql = getCachedSql(SqlGenerator.SQL_STATEMENT.selectAll)
+            + " where ORDER_KEY = :orderKey ";
+        List<TaskRecord> taskRecordList = find(sql, Map.of("orderKey", orderKey), null);
+        return taskRecordList.stream().map(r -> {
+            TaskInput<I> input = JacksonUtil.fromJson(r.getInput(), new TypeReference<>() {
+            });
+            TaskExecution<I, O> taskExecution = taskContext.getTaskFactory().createTaskForExecution(r.getExecutionKey());
+            Task<I, O> task;
+            if (r.isAsync()) {
+                task = new AsyncTask<>(r.getId(), taskContext, r.getOrderKey(), r.getName()
+                    , input, -1L, TimeUnit.MINUTES, taskExecution);
+            } else {
+                task = new SyncTask<>(r.getId(), taskContext, r.getOrderKey(), r.getName()
+                    , input, r.getTimeout(), r.getTimeoutUnit(), taskExecution);
+            }
+            task.setSuccessorIds(r.getSuccessorIds());
+            return task;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public <I, O> int createTasksForOrder(String orderKey, List<Task<I, O>> listOfTask) {
         AtomicInteger result = new AtomicInteger();
         jdbi.useTransaction(h -> {
             listOfTask.forEach(t -> {
@@ -111,43 +132,52 @@ public abstract class TaskRecordDaoJdbiImpl<I, O> extends BaseDaoJdbiImpl<TaskRe
         }
         String sql = getCachedSql(SqlGenerator.SQL_STATEMENT.countAll)
             + " where ORDER_KEY = :orderKey  and STATUS != :status ";
-        Long nonSuccessCount = count(sql, Map.of("orderKey", orderKey, "status", TaskStatus.SUCCESS), null);
+        int nonSuccessCount = count(sql, Map.of("orderKey", orderKey, "status", TaskStatus.SUCCESS), null);
         return nonSuccessCount == 0;
     }
 
     @Override
-    public int start(Long id, TaskInput<I> input, LocalDateTime startDt) {
+    public <I> int start(Long id, TaskInput<I> input, LocalDateTime startDt) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(startDt);
         String sql = """
             update t_task set STATUS = :status , START_DT = :startDt , INPUT = :input
             where ID = :id
             """;
-        return update(sql, Map.of("status", TaskStatus.SUCCESS, "startDt", startDt, "id", id), null);
+        return update(sql, Map.of("status", TaskStatus.RUNNING, "startDt"
+            , startDt, "id", id, "input", input.toJson()), null);
     }
 
     @Override
-    public int stop(Long id, TaskStatus newStatus, TaskOutput<O> output, LocalDateTime stopDt) {
+    public <O> int stop(Long id, TaskStatus newStatus, TaskOutput<O> output, LocalDateTime endDt) {
         Objects.requireNonNull(id);
-        Objects.requireNonNull(stopDt);
+        Objects.requireNonNull(endDt);
         boolean success = newStatus == TaskStatus.SUCCESS;
         LocalDateTime now = LocalDateTime.now();
         String sql = """
             update t_task set STATUS = :status
-            , OUTPUT = :output
-            , FAIL_REASON = :failReason
             , LAST_UPDATE_DT = :lastUpdateDt
             , SUCCESS = :success
-            , STOP_DT = :stopDt
-            where ID = :id
+            , END_DT = :endDt
             """;
-        return update(sql, Map.of("status", newStatus
-            , "output", output.getOutput()
-            , "failReason", output.getFailureReason()
-            , "lastUpdateDt", now
-            , "success", success
-            , "stopDt", stopDt
-            , "id", id), null);
+
+        Map<String, Object> normalParams = new HashMap<>();
+        normalParams.put("id", id);
+        normalParams.put("status", newStatus);
+        normalParams.put("lastUpdateDt", now);
+        normalParams.put("endDt", endDt);
+        normalParams.put("success", success);
+
+        if (Objects.nonNull(output.getOutput())) {
+            sql = sql + " ,OUTPUT = :output ";
+            normalParams.put("output", output.getOutput());
+        }
+        if (Objects.nonNull(output.getFailureReason())) {
+            sql = sql + " ,FAIL_REASON = :failReason";
+            normalParams.put("failReason", output.getFailureReason());
+        }
+        sql = sql + " where ID = :id ";
+        return update(sql, normalParams, null);
     }
 
     @Override
@@ -156,25 +186,8 @@ public abstract class TaskRecordDaoJdbiImpl<I, O> extends BaseDaoJdbiImpl<TaskRe
         return findOne(taskId).map(TaskRecord::getOrderKey).orElse(null);
     }
 
-    private Task<I, O> toTask(TaskRecord r){
-        TaskInput<I> input = JacksonUtil.fromJson(r.getInput(), new TypeReference<>() {
-        });
-        TaskExecution<I, O> taskExecution = taskContext.getTaskFactory().createTaskForExecution(r.getExecutionKey());
-        Task<I, O> task;
-        if (r.isAsync()) {
-            task = new AsyncTask<>(r.getId(), taskContext, r.getOrderKey(), r.getName()
-                , input, -1L, TimeUnit.MINUTES, taskExecution);
-        } else {
-            task = new SyncTask<>(r.getId(), taskContext, r.getOrderKey(), r.getName()
-                , input, -1L, TimeUnit.MINUTES, taskExecution);
-        }
-        task.setSuccessorIds(r.getSuccessorIds());
-        return task;
-    }
 
-
-
-    private TaskRecord toTaskRecord(Task<I, O> t){
+    private <I, O> TaskRecord toTaskRecord(Task<I, O> t) {
         Objects.requireNonNull(t);
         String input = JacksonUtil.toJson(t.getInput());
         TaskOutput<O> out = t.getOutput();
@@ -200,5 +213,5 @@ public abstract class TaskRecordDaoJdbiImpl<I, O> extends BaseDaoJdbiImpl<TaskRe
             .build();
     }
 
-    protected final TaskContext<I,O> taskContext;
+    protected final TaskContext taskContext;
 }

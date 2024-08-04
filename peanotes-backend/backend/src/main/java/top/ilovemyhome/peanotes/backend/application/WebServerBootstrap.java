@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.backend.web.handlers.HealthHandler;
 import top.ilovemyhome.peanotes.backend.web.handlers.OperationHandler;
 import top.ilovemyhome.peanotes.backend.web.handlers.system.SystemHandler;
+import top.ilovemyhome.peanotes.backend.web.handlers.system.TaskHandler;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -123,11 +124,13 @@ public class WebServerBootstrap {
     private static RestHandlerBuilder createRestHandler(AppContext appContext) {
         OperationHandler operationHandler = new OperationHandler(appContext);
         SystemHandler systemHandler = new SystemHandler(appContext);
+        TaskHandler taskHandler = new TaskHandler(appContext);
+
         return RestHandlerBuilder
-            .restHandler(operationHandler, systemHandler)
-            .withCollectionParameterStrategy(CollectionParameterStrategy.SPLIT_ON_COMMA)
+            .restHandler(operationHandler, systemHandler, taskHandler)
             .addCustomReader(new JacksonJsonProvider())
             .addCustomWriter(new JacksonJsonProvider())
+            .withCollectionParameterStrategy(CollectionParameterStrategy.SPLIT_ON_COMMA)
             .withOpenApiHtmlUrl("/api.html")
             .withOpenApiJsonUrl("/openapi.json")
             .addExceptionMapper(ClientErrorException.class, e -> Response.status(Response.Status.BAD_REQUEST.getStatusCode())

@@ -10,7 +10,7 @@ public class TaskBuilder<I, O> {
     private boolean asyncFlag = true;
 
     private Long id;
-    private TaskContext<I, O> taskContext;
+    private TaskContext taskContext;
     private String orderKey;
     private String name;
     private TaskExecution<I, O> execution;

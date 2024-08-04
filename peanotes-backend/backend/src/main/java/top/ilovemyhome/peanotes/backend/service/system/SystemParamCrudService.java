@@ -47,7 +47,6 @@ public class SystemParamCrudService {
         if (Objects.isNull(paramEntity.getId())){
             Long id = systemParamDao.create(paramEntity);
             paramEntity.setId(id);
-            paramEntity.setPersisted(true);
         }else {
             Long id = paramEntity.getId();
             if (Objects.isNull(id)){

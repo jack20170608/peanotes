@@ -1,0 +1,15 @@
+{
+  "id": 59,
+  "name" : "foo",
+  "key" : "FOO_DAILY_20240718_ASYNC",
+  "orderType" : "Daily",
+  "otherKeys" : {
+    "bizDate" : "20240718",
+    "runType" : "SYNC"
+  },
+  "params" : {
+    "type" : "fund"
+  },
+  "createDt" : "2024-08-04 20:27:18.908",
+  "lastUpdateDt" : "2024-08-04 20:27:18.908"
+}

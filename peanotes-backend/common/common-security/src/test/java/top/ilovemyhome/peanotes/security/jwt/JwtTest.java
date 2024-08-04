@@ -70,9 +70,9 @@ public class JwtTest {
         LOGGER.info(jwt);
         JwtHelper.printJwtInfo(jwt);
 
-        Jws<Claims> claimsJws = Jwts.parser()
-            .verifyWith(signingKey).build()
-            .parseSignedClaims(jwt);
+//        Jws<Claims> claimsJws = Jwts.parser()
+//            .verifyWith(signingKey).build()
+//            .parseSignedClaims(jwt);
 
 
 

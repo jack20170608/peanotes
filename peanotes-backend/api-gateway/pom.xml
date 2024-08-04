@@ -31,13 +31,6 @@
             <groupId>io.muserver</groupId>
             <artifactId>mu-server</artifactId>
         </dependency>
-
-        <!--
-        <dependency>
-            <groupId>cn.dev33</groupId>
-            <artifactId>sa-token-core</artifactId>
-        </dependency>
-        -->
         <!-- the internal dependencies -->
         <dependency>
             <groupId>top.ilovemyhome</groupId>
@@ -46,6 +39,10 @@
         <dependency>
             <groupId>top.ilovemyhome</groupId>
             <artifactId>common-db</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>top.ilovemyhome</groupId>
+            <artifactId>common-security</artifactId>
         </dependency>
         <!-- the thrid party dependencies -->
         <dependency>

@@ -195,6 +195,16 @@
                 <artifactId>common-db</artifactId>
                 <version>${revision}</version>
             </dependency>
+            <dependency>
+                <groupId>top.ilovemyhome</groupId>
+                <artifactId>common-security</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.ilovemyhome</groupId>
+                <artifactId>common-task</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!-- end -->
 
             <!-- the junit 5 test related -->

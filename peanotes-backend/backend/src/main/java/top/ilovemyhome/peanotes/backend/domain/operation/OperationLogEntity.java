@@ -9,7 +9,6 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.google.common.collect.ImmutableMap;
 import top.ilovemyhome.peanotes.backend.common.Constants;
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -19,7 +18,7 @@ import java.util.stream.Stream;
 
 
 @JsonDeserialize(builder = OperationLogEntity.Builder.class)
-public class OperationLogEntity implements Persistable<Long> {
+public class OperationLogEntity {
 
     private transient boolean persisted;
 
@@ -74,17 +73,9 @@ public class OperationLogEntity implements Persistable<Long> {
 
 
 
-    @Override
     public Long getId() {
         return id;
     }
-
-    @JsonIgnore
-    @Override
-    public boolean isNew() {
-        return !persisted;
-    }
-
 
     public void setId(Long id) {
         this.id = id;

@@ -7,22 +7,17 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import top.ilovemyhome.peanotes.backend.common.Constants;
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.Persistable;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonDeserialize(builder = SystemParamEntity.Builder.class)
-public class SystemParamEntity implements Persistable<Long> {
-
-    private transient boolean persisted;
+public class SystemParamEntity {
 
     private Long id;
     private final String paramName;
@@ -75,10 +70,7 @@ public class SystemParamEntity implements Persistable<Long> {
     public static final Map<String, String> FIELD_COLUMN_MAP = ImmutableMap.copyOf(Stream.of(SystemParamEntity.Field.values())
         .collect(Collectors.toMap(SystemParamEntity.Field::name, SystemParamEntity.Field::getDbColumn)));
 
-    public static final List<String> ID_FIELDS = ImmutableList.copyOf(Stream.of(SystemParamEntity.Field.values())
-        .filter(f -> f.isId)
-        .map(Enum::name)
-        .collect(Collectors.toList()));
+    public static final String ID_FIELD = Field.id.name();
 
     public String getParamName() {
         return paramName;
@@ -108,20 +100,10 @@ public class SystemParamEntity implements Persistable<Long> {
         this.id = id;
     }
 
-    @Override
     public Long getId() {
         return id;
     }
 
-    public void setPersisted(boolean persisted) {
-        this.persisted = persisted;
-    }
-
-    @Override
-    @JsonIgnore
-    public boolean isNew() {
-        return persisted;
-    }
 
     @Override
     public boolean equals(Object o) {

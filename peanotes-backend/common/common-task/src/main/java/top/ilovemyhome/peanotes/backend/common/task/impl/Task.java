@@ -27,10 +27,10 @@ public abstract class Task<I, O> implements Runnable {
     private TaskStatus taskStatus = TaskStatus.INIT;
     private LocalDateTime startDt;
     private LocalDateTime endDt;
-    protected transient TaskContext<I, O> taskContext;
+    protected transient TaskContext taskContext;
     private LocalDateTime lastUpdateDt;
 
-    Task(Long id, TaskContext<I, O> taskContext, String orderKey, String name, TaskInput<I> input
+    Task(Long id, TaskContext taskContext, String orderKey, String name, TaskInput<I> input
         , Long timeout, TimeUnit timeoutUnit, TaskExecution<I, O> taskExecution) {
         LocalDateTime now = LocalDateTime.now();
         this.id = id;
@@ -47,11 +47,10 @@ public abstract class Task<I, O> implements Runnable {
 
     void start() {
         LocalDateTime now = LocalDateTime.now();
-        this.input = input;
         this.startDt = now;
         this.taskStatus = TaskStatus.RUNNING;
         this.lastUpdateDt = now;
-        taskContext.getTaskDao().start(id, this.input, now);
+        taskContext.getTaskRecordDao().start(id, this.input, now);
     }
 
     void failure(TaskStatus newStatus, TaskOutput<O> output) {
@@ -63,7 +62,7 @@ public abstract class Task<I, O> implements Runnable {
         this.output = output;
         this.endDt = now;
         this.lastUpdateDt = now;
-        taskContext.getTaskDao().stop(id, newStatus, output, now);
+        taskContext.getTaskRecordDao().stop(id, newStatus, output, now);
     }
 
     boolean isReady() {
@@ -98,7 +97,7 @@ public abstract class Task<I, O> implements Runnable {
         this.endDt = now;
         this.lastUpdateDt = now;
         this.taskStatus = TaskStatus.SUCCESS;
-        taskContext.getTaskDao().stop(id, TaskStatus.SUCCESS, output, now);
+        taskContext.getTaskRecordDao().stop(id, TaskStatus.SUCCESS, output, now);
         LOGGER.info("OrderId={}, id={}, name={} execute successfully.", orderKey, id, name);
         Set<Task<I, O>> successors = getSuccessorTasks();
         if (Objects.nonNull(successors) && !successors.isEmpty()) {

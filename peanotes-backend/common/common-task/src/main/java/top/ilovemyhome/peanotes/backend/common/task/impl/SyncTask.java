@@ -18,7 +18,7 @@ public class SyncTask<I, O> extends Task<I, O> {
     private static final long DEFAULT_TIMEOUT_SECONDS = 60;
     private static final TimeUnit DEFAULT_TIMEOUT_UNIT = TimeUnit.SECONDS;
 
-    public SyncTask(Long id, TaskContext<I, O> taskContext, String orderKey, String name
+    public SyncTask(Long id, TaskContext taskContext, String orderKey, String name
         , TaskInput<I> input, Long timeout, TimeUnit timeoutUnit, TaskExecution<I, O> taskExecution) {
         super(id, taskContext, orderKey, name, input, timeout < 1L ? DEFAULT_TIMEOUT_SECONDS : timeout
             , Objects.isNull(timeoutUnit) ? DEFAULT_TIMEOUT_UNIT : timeoutUnit, taskExecution);
