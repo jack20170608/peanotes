@@ -2,6 +2,7 @@ package top.ilovemyhome.peanotes.backend.common.db.dao.common;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.flywaydb.core.internal.database.base.Table;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Order;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Pageable;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Sort;
@@ -23,7 +24,7 @@ public class SqlGenerator {
     public static final String ID = "ID";
 
     public enum SQL_STATEMENT {
-        deleteAll, deleteById, deleteByIds, selectAll, selectById, selectByIds, countAll
+        deleteAll, deleteById, deleteByIds, selectAll, selectById, selectByIds, countAll, updateAll, updateById
     }
 
     public static final String SQL_CREATE_TEMPLATE = """
@@ -165,21 +166,12 @@ public class SqlGenerator {
         return orderByClause.toString();
     }
 
+    public String updateAll(TableDescription table){
+        return createUpdateStatement(table) + " where 1 = 1 ";
+    }
+
     public String updateById(TableDescription table) {
-        final StringBuilder updateQuery = new StringBuilder("UPDATE " + table.getName() + " SET ");
-        Set<Map.Entry<String, String>> nonIdFieldSet = table.getFieldColumnMap().entrySet().stream()
-            .filter(entry -> !entry.getKey().equals(table.getIdField())).collect(Collectors.toSet());
-        for (Iterator<Map.Entry<String, String>> iterator = nonIdFieldSet.iterator(); iterator.hasNext(); ) {
-            Map.Entry<String, String> fieldEntry = iterator.next();
-            String fieldName = fieldEntry.getKey();
-            String column = fieldEntry.getValue();
-            updateQuery.append(column).append(" = :t.").append(fieldName);
-            if (iterator.hasNext()) {
-                updateQuery.append(COMMA);
-            }
-        }
-        updateQuery.append(whereByIdClause(table));
-        return updateQuery.toString();
+        return createUpdateStatement(table) + whereByIdClause(table);
     }
 
     public String create(TableDescription table) {
@@ -209,6 +201,21 @@ public class SqlGenerator {
         return DELETE + FROM + table.getName();
     }
 
+    private String createUpdateStatement(TableDescription table) {
+        final StringBuilder updateQuery = new StringBuilder("UPDATE " + table.getName() + " SET ");
+        Set<Map.Entry<String, String>> nonIdFieldSet = table.getFieldColumnMap().entrySet().stream()
+            .filter(entry -> !entry.getKey().equals(table.getIdField())).collect(Collectors.toSet());
+        for (Iterator<Map.Entry<String, String>> iterator = nonIdFieldSet.iterator(); iterator.hasNext(); ) {
+            Map.Entry<String, String> fieldEntry = iterator.next();
+            String fieldName = fieldEntry.getKey();
+            String column = fieldEntry.getValue();
+            updateQuery.append(column).append(" = :t.").append(fieldName);
+            if (iterator.hasNext()) {
+                updateQuery.append(COMMA);
+            }
+        }
+        return updateQuery.toString();
+    }
 
     public String getAllColumnsClause() {
         return allColumnsClause;

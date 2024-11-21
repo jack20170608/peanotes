@@ -1,7 +1,5 @@
 package top.ilovemyhome.peanotes.backend.common.task.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Test;
 import top.ilovemyhome.peanotes.backend.common.json.JacksonUtil;
 import top.ilovemyhome.peanotes.backend.common.task.SimpleTaskOrder;
@@ -65,8 +63,8 @@ public class SimpleTaskOrderTest {
         assertThat(taskFromJson.getOtherKeysInJson()).isNull();
         assertThat(taskFromJson.getParams()).isNull();
         assertThat(taskFromJson.getParamsInJson()).isNull();
-        assertThat(taskFromJson.getCreateDt()).isNull();
-        assertThat(taskFromJson.getLastUpdateDt()).isNull();
+        assertThat(taskFromJson.getCreateDt()).isNotNull();
+        assertThat(taskFromJson.getLastUpdateDt()).isNotNull();
 
     }
 }

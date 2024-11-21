@@ -2,8 +2,6 @@ package top.ilovemyhome.peanotes.netty.chapter5;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufHolder;
-import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
 public class ByteBufHolderTest {

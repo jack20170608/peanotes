@@ -42,6 +42,9 @@
 - [JWT 库 jjwt](https://github.com/jwtk/jjwt)
 - [轻量级权限控制模块 Sa-Token](https://github.com/dromara/Sa-Token)
 
+## 自动化测试
+- [karate](https://karatelabs.github.io/karate/karate-core/)
+
 ## Reference Page for examples
 - [typesafe config examples](https://github.com/lightbend/config/tree/main/examples)
 - [junit5 samples](https://github.com/junit-team/junit5-samples/blob/fd1688afcd92d3b42b2dd45b19b1e51dfaf86d5a/junit5-jupiter-starter-maven/pom.xml)
@@ -58,3 +61,6 @@
 
 ## Base64
 - [Java Base64 Encoding and Decoding](https://www.baeldung.com/java-base64-encode-and-decode)
+
+## Jackson 接口反序列化
+- [Interface Deserialising](https://andrewtarry.com/posts/deserialising-an-interface-with-jackson/)

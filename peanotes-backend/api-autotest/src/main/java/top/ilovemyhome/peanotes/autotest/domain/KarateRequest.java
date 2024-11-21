@@ -1,6 +1,5 @@
 package top.ilovemyhome.peanotes.autotest.domain;
 
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.Persistable;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -10,7 +9,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class KarateRequest implements Persistable<Long> {
+public class KarateRequest {
 
     private Long id;
     private final String name;
@@ -73,11 +72,6 @@ public class KarateRequest implements Persistable<Long> {
 
     public Long getId() {
         return id;
-    }
-
-    @Override
-    public boolean isNew() {
-        return id == null || id == 0;
     }
 
     public void setId(Long id) {

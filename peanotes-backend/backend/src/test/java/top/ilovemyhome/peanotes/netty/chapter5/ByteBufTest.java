@@ -21,6 +21,38 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class ByteBufTest {
 
     @Test
+    public void testManuallyRead(){
+        ByteBuf buf = Unpooled.buffer(32, 64);
+        if (buf.hasArray()){
+            byte [] array = buf.array();
+            LOGGER.info("buf's capacity is {}.", buf.capacity());
+            LOGGER.info("ArrayOffset is {}, readableBytes is {}, writableBytes is {} ."
+                , buf.arrayOffset(), buf.readableBytes(), buf.writableBytes());
+            buf.writeLong(1L);
+            buf.writeLong(2L);
+            buf.writeLong(3L);
+            buf.writeLong(4L);
+            LOGGER.info("ArrayOffset is {}, readableBytes is {}, writableBytes is {} ."
+                , buf.arrayOffset(), buf.readableBytes(), buf.writableBytes());
+            Long one = buf.readLong();
+            Long two = buf.readLong();
+            Long three = buf.readLong();
+            Long four = buf.readLong();
+            LOGGER.info("one is {}, two is {}, three is {}, four is {}.", one, two, three, four);
+            LOGGER.info("ArrayOffset is {}, readableBytes is {}, writableBytes is {} ."
+                , buf.arrayOffset(), buf.readableBytes(), buf.writableBytes());
+            buf.writeLong(100L);
+            buf.writeLong(100L);
+            buf.writeLong(100L);
+            LOGGER.info("ArrayOffset is {}, readableBytes is {}, writableBytes is {} ."
+                , buf.arrayOffset(), buf.readableBytes(), buf.writableBytes());
+            buf.writeLong(100L);
+            buf.writeLong(100L);
+            LOGGER.info("buf's capacity is {}.", buf.capacity());
+        }
+    }
+
+    @Test
     public void testAllocateInHeap() throws Exception {
         ByteBuf[] bufs = new ByteBuf[10];
         IntStream.range(1,10).boxed().forEach(i -> {

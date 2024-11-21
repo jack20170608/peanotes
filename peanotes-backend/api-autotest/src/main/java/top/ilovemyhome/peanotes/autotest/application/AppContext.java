@@ -34,19 +34,19 @@ public class AppContext {
     }
 
     private void initDao(){
-        BEAN_FACTORY.put(OperationLogDaoImpl.class, operationLogDao);
-        BEAN_NAME_FACTORY.put("operationLogDao", operationLogDao);
+//        BEAN_FACTORY.put(OperationLogDaoImpl.class, operationLogDao);
+//        BEAN_NAME_FACTORY.put("operationLogDao", operationLogDao);
 
-        BEAN_FACTORY.put(SystemParamDaoImpl.class, systemParamDao);
-        BEAN_NAME_FACTORY.put("systemParamDao", systemParamDao);
+//        BEAN_FACTORY.put(SystemParamDaoImpl.class, systemParamDao);
+//        BEAN_NAME_FACTORY.put("systemParamDao", systemParamDao);
     }
 
     private void initService(){
-        BEAN_FACTORY.put(OperationLogCrudService.class, operationLogCrudService);
-        BEAN_NAME_FACTORY.put("operationLogCrudService", operationLogCrudService);
-
-        BEAN_FACTORY.put(SystemParamCrudService.class, systemParamCrudService);
-        BEAN_NAME_FACTORY.put("systemParamCrudService", systemParamCrudService);
+//        BEAN_FACTORY.put(OperationLogCrudService.class, operationLogCrudService);
+//        BEAN_NAME_FACTORY.put("operationLogCrudService", operationLogCrudService);
+//
+//        BEAN_FACTORY.put(SystemParamCrudService.class, systemParamCrudService);
+//        BEAN_NAME_FACTORY.put("systemParamCrudService", systemParamCrudService);
     }
 
     public String getApplicationName() {

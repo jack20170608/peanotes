@@ -20,6 +20,7 @@ public final class LocalDateUtils {
     public static final String DATE_PATTERN = "yyyy-MM-dd";
     public static final String TIME_PATTERN = "HH:mm:ss";
     public static final String UNSIGNED_DATETIME_PATTERN = "yyyyMMddHHmmss";
+    public static final String UNSIGNED_TIMESTAMP_PATTERN = "yyyyMMddHHmmssSSS";
     public static final String UNSIGNED_DATE_PATTERN = "yyyyMMdd";
 
     /**

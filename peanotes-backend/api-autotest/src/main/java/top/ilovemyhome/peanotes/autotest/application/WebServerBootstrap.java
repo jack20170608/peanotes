@@ -18,8 +18,6 @@ import top.ilovemyhome.peanotes.autotest.web.handlers.HealthHandler;
 import top.ilovemyhome.peanotes.autotest.web.handlers.OperationHandler;
 
 import java.net.URI;
-import java.net.http.HttpRequest;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,11 +38,6 @@ public class WebServerBootstrap {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("Shutting down....");
             executorService.shutdown();
-            try {
-                connector.stop(9, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                LOGGER.info("Error stopping connector", e);
-            }
             targetServer.stop();
             LOGGER.info("Shutdown complete");
         }));
@@ -84,7 +77,7 @@ public class WebServerBootstrap {
         OperationHandler operationHandler = new OperationHandler(appContext);
         return RestHandlerBuilder
             .restHandler(operationHandler)
-            .withCollectionParameterStrategy(CollectionParameterStrategy.SPLIT_ON_COMMA)
+            .withCollectionParameterStrategy(CollectionParameterStrategy.NO_TRANSFORM)
             .addCustomReader(new JacksonJsonProvider())
             .addCustomWriter(new JacksonJsonProvider())
             .withOpenApiHtmlUrl("/api.html")

@@ -107,6 +107,11 @@ public class SqlGeneratorTest {
         assertThat(sql).isEqualTo("UPDATE xyz SET Y = :t.y, Z = :t.z WHERE X = :x");
     }
 
+    @Test
+    public void testUpdateAll(){
+        final String sql = sqlGenerator.updateAll(xyzTable);
+        assertThat(sql).isEqualTo("UPDATE xyz SET Y = :t.y, Z = :t.z where 1 = 1 ");
+    }
 
     @Test
     public void testSearchCriteria() {

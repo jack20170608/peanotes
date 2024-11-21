@@ -54,10 +54,9 @@ public final class StringConvertUtils {
         }
     }
 
-    public static Short toInt(String value) {
-        return toShort(value, null);
+    public static Integer toInt(String value) {
+        return toInt(value, null);
     }
-
 
     public static Long toLong(String value, Long defaultValue) {
         if (isEmpty(value)) {

@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
 
-    public abstract void registerRowMappers(Jdbi jdbi);
+    protected abstract void registerRowMappers(Jdbi jdbi);
 
 
     @Override
@@ -230,9 +230,10 @@ public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
                 case deleteByIds -> sql = sqlGenerator.deleteByIds(this.table);
                 case selectAll -> sql = sqlGenerator.selectAll(this.table);
                 case selectById -> sql = sqlGenerator.selectById(this.table);
-                case selectByIds ->
-                    sql = sqlGenerator.selectByIds(this.table, 2);
+                case selectByIds -> sql = sqlGenerator.selectByIds(this.table, 2);
                 case countAll -> sql = sqlGenerator.count(this.table);
+                case updateAll -> sql = sqlGenerator.updateAll(this.table);
+                case updateById -> sql = sqlGenerator.updateById(this.table);
                 default ->
                     throw new IllegalArgumentException("Not support sql statement type");
             }

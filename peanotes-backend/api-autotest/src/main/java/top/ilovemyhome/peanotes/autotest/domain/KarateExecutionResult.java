@@ -1,6 +1,5 @@
 package top.ilovemyhome.peanotes.autotest.domain;
 
-import top.ilovemyhome.peanotes.backend.common.db.dao.common.Persistable;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -10,7 +9,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class KarateExecutionResult implements Persistable<Long> {
+public class KarateExecutionResult {
 
     private Long id;
     private final Long karateExecutionId;
@@ -28,17 +27,9 @@ public class KarateExecutionResult implements Persistable<Long> {
 
     private KarateExecution karateExecution;
 
-    @Override
     public Long getId() {
         return id;
     }
-
-    @Override
-    public boolean isNew() {
-        return Objects.isNull(id) || id == 0;
-    }
-
-
 
     private KarateExecutionResult(Long id, Long karateExecutionId, int threadCount, int featureCount, int passCount, int failCount, int skipCount, LocalDateTime startDt, LocalDateTime endDt, Duration takeTime, Map<String, String> failedMap, String failureReason) {
         this.id = id;

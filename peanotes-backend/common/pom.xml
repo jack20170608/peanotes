@@ -21,6 +21,8 @@
         <module>common-http</module>
         <module>common-security</module>
         <module>common-task</module>
+        <module>common-task-executor</module>
+        <module>common-task-admin</module>
     </modules>
 
 </project>
