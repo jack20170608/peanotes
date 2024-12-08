@@ -1,144 +1,126 @@
 package top.ilovemyhome.peanotes.common.task.exe.domain;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.DurationDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.DurationSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import top.ilovemyhome.peanotes.backend.common.Constants;
+import top.ilovemyhome.peanotes.common.task.exe.domain.enums.ExecutorBlockStrategyEnum;
+import top.ilovemyhome.peanotes.common.task.exe.domain.enums.TaskType;
 
-/**
- * Created by xuxueli on 16/7/22.
- */
-public class TriggerParam implements Serializable{
-    private static final long serialVersionUID = 42L;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
-    private int jobId;
+@JsonDeserialize(builder = TriggerParam.Builder.class)
+public record TriggerParam(
+    Long jobId
+    , String executorHandler
+    , String executorParams
+    , ExecutorBlockStrategyEnum executorBlockStrategy
+    , @JsonSerialize(using = DurationSerializer.class)  Duration executorTimeout
+    , Long logId
+    , @JsonSerialize(using = LocalDateTimeSerializer.class) @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT) LocalDateTime logDateTime
+    , TaskType taskType
+    , String scriptSource
+    , @JsonSerialize(using = LocalDateTimeSerializer.class) @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT) LocalDateTime scriptUpdatetime
+    , int broadcastIndex
+    , int broadcastTotal) {
 
-    private String executorHandler;
-    private String executorParams;
-    private String executorBlockStrategy;
-    private int executorTimeout;
-
-    private long logId;
-    private long logDateTime;
-
-    private String glueType;
-    private String glueSource;
-    private long glueUpdatetime;
-
-    private int broadcastIndex;
-    private int broadcastTotal;
-
-
-    public int getJobId() {
-        return jobId;
+    public static Builder builder() {
+        return new Builder();
     }
 
-    public void setJobId(int jobId) {
-        this.jobId = jobId;
+    @JsonPOJOBuilder(withPrefix = "with")
+    public static final class Builder {
+        private Long jobId;
+        private String executorHandler;
+        private String executorParams;
+        private ExecutorBlockStrategyEnum executorBlockStrategy;
+        private Duration executorTimeout;
+        private Long logId;
+        private LocalDateTime logDateTime;
+        private TaskType taskType;
+        private String scriptSource;
+        private LocalDateTime scriptUpdatetime;
+        private int broadcastIndex;
+        private int broadcastTotal;
+
+        private Builder() {
+        }
+
+
+
+        public Builder withJobId(Long jobId) {
+            this.jobId = jobId;
+            return this;
+        }
+
+        public Builder withExecutorHandler(String executorHandler) {
+            this.executorHandler = executorHandler;
+            return this;
+        }
+
+        public Builder withExecutorParams(String executorParams) {
+            this.executorParams = executorParams;
+            return this;
+        }
+
+        public Builder withExecutorBlockStrategy(ExecutorBlockStrategyEnum executorBlockStrategy) {
+            this.executorBlockStrategy = executorBlockStrategy;
+            return this;
+        }
+
+        @JsonDeserialize(using = DurationDeserializer.class)
+        public Builder withExecutorTimeout(Duration executorTimeout) {
+            this.executorTimeout = executorTimeout;
+            return this;
+        }
+
+        public Builder withLogId(Long logId) {
+            this.logId = logId;
+            return this;
+        }
+
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
+        public Builder withLogDateTime(LocalDateTime logDateTime) {
+            this.logDateTime = logDateTime;
+            return this;
+        }
+
+        public Builder withTaskType(TaskType taskType) {
+            this.taskType = taskType;
+            return this;
+        }
+
+        public Builder withScriptSource(String scriptSource) {
+            this.scriptSource = scriptSource;
+            return this;
+        }
+
+        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
+        public Builder withScriptUpdatetime(LocalDateTime scriptUpdatetime) {
+            this.scriptUpdatetime = scriptUpdatetime;
+            return this;
+        }
+
+        public Builder withBroadcastIndex(int broadcastIndex) {
+            this.broadcastIndex = broadcastIndex;
+            return this;
+        }
+
+        public Builder withBroadcastTotal(int broadcastTotal) {
+            this.broadcastTotal = broadcastTotal;
+            return this;
+        }
+
+        public TriggerParam build() {
+            return new TriggerParam(jobId, executorHandler, executorParams, executorBlockStrategy, executorTimeout, logId, logDateTime, taskType, scriptSource, scriptUpdatetime, broadcastIndex, broadcastTotal);
+        }
     }
-
-    public String getExecutorHandler() {
-        return executorHandler;
-    }
-
-    public void setExecutorHandler(String executorHandler) {
-        this.executorHandler = executorHandler;
-    }
-
-    public String getExecutorParams() {
-        return executorParams;
-    }
-
-    public void setExecutorParams(String executorParams) {
-        this.executorParams = executorParams;
-    }
-
-    public String getExecutorBlockStrategy() {
-        return executorBlockStrategy;
-    }
-
-    public void setExecutorBlockStrategy(String executorBlockStrategy) {
-        this.executorBlockStrategy = executorBlockStrategy;
-    }
-
-    public int getExecutorTimeout() {
-        return executorTimeout;
-    }
-
-    public void setExecutorTimeout(int executorTimeout) {
-        this.executorTimeout = executorTimeout;
-    }
-
-    public long getLogId() {
-        return logId;
-    }
-
-    public void setLogId(long logId) {
-        this.logId = logId;
-    }
-
-    public long getLogDateTime() {
-        return logDateTime;
-    }
-
-    public void setLogDateTime(long logDateTime) {
-        this.logDateTime = logDateTime;
-    }
-
-    public String getGlueType() {
-        return glueType;
-    }
-
-    public void setGlueType(String glueType) {
-        this.glueType = glueType;
-    }
-
-    public String getGlueSource() {
-        return glueSource;
-    }
-
-    public void setGlueSource(String glueSource) {
-        this.glueSource = glueSource;
-    }
-
-    public long getGlueUpdatetime() {
-        return glueUpdatetime;
-    }
-
-    public void setGlueUpdatetime(long glueUpdatetime) {
-        this.glueUpdatetime = glueUpdatetime;
-    }
-
-    public int getBroadcastIndex() {
-        return broadcastIndex;
-    }
-
-    public void setBroadcastIndex(int broadcastIndex) {
-        this.broadcastIndex = broadcastIndex;
-    }
-
-    public int getBroadcastTotal() {
-        return broadcastTotal;
-    }
-
-    public void setBroadcastTotal(int broadcastTotal) {
-        this.broadcastTotal = broadcastTotal;
-    }
-
-
-    @Override
-    public String toString() {
-        return "TriggerParam{" +
-                "jobId=" + jobId +
-                ", executorHandler='" + executorHandler + '\'' +
-                ", executorParams='" + executorParams + '\'' +
-                ", executorBlockStrategy='" + executorBlockStrategy + '\'' +
-                ", executorTimeout=" + executorTimeout +
-                ", logId=" + logId +
-                ", logDateTime=" + logDateTime +
-                ", glueType='" + glueType + '\'' +
-                ", glueSource='" + glueSource + '\'' +
-                ", glueUpdatetime=" + glueUpdatetime +
-                ", broadcastIndex=" + broadcastIndex +
-                ", broadcastTotal=" + broadcastTotal +
-                '}';
-    }
-
 }

@@ -1,67 +1,23 @@
 package top.ilovemyhome.peanotes.common.task.exe.domain;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import top.ilovemyhome.peanotes.backend.common.Constants;
 
-/**
- * Created by xuxueli on 17/3/2.
- */
-public class HandleCallbackParam implements Serializable {
-    private static final long serialVersionUID = 42L;
+import java.time.LocalDateTime;
 
-    private long logId;
-    private long logDateTim;
-
-    private int handleCode;
-    private String handleMsg;
-
-    public HandleCallbackParam(){}
-    public HandleCallbackParam(long logId, long logDateTim, int handleCode, String handleMsg) {
-        this.logId = logId;
-        this.logDateTim = logDateTim;
-        this.handleCode = handleCode;
-        this.handleMsg = handleMsg;
-    }
-
-    public long getLogId() {
-        return logId;
-    }
-
-    public void setLogId(long logId) {
-        this.logId = logId;
-    }
-
-    public long getLogDateTim() {
-        return logDateTim;
-    }
-
-    public void setLogDateTim(long logDateTim) {
-        this.logDateTim = logDateTim;
-    }
-
-    public int getHandleCode() {
-        return handleCode;
-    }
-
-    public void setHandleCode(int handleCode) {
-        this.handleCode = handleCode;
-    }
-
-    public String getHandleMsg() {
-        return handleMsg;
-    }
-
-    public void setHandleMsg(String handleMsg) {
-        this.handleMsg = handleMsg;
-    }
-
-    @Override
-    public String toString() {
-        return "HandleCallbackParam{" +
-                "logId=" + logId +
-                ", logDateTim=" + logDateTim +
-                ", handleCode=" + handleCode +
-                ", handleMsg='" + handleMsg + '\'' +
-                '}';
-    }
+public record HandleCallbackParam(
+    Long taskId
+    , String taskName
+    , Long logId
+    , @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
+    LocalDateTime logDateTime
+    , int handleCode
+    , String handleMsg) {
 
 }

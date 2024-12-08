@@ -1,47 +1,22 @@
 package top.ilovemyhome.peanotes.common.task.exe.domain;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import top.ilovemyhome.peanotes.backend.common.Constants;
 
-/**
- * @author xuxueli 2020-04-11 22:27
- */
-public class LogParam implements Serializable {
-    private static final long serialVersionUID = 42L;
+import java.time.LocalDateTime;
 
-    public LogParam() {
-    }
-    public LogParam(long logDateTim, long logId, int fromLineNum) {
-        this.logDateTim = logDateTim;
-        this.logId = logId;
-        this.fromLineNum = fromLineNum;
-    }
-
-    private long logDateTim;
-    private long logId;
-    private int fromLineNum;
-
-    public long getLogDateTim() {
-        return logDateTim;
-    }
-
-    public void setLogDateTim(long logDateTim) {
-        this.logDateTim = logDateTim;
-    }
-
-    public long getLogId() {
-        return logId;
-    }
-
-    public void setLogId(long logId) {
-        this.logId = logId;
-    }
-
-    public int getFromLineNum() {
-        return fromLineNum;
-    }
-
-    public void setFromLineNum(int fromLineNum) {
-        this.fromLineNum = fromLineNum;
-    }
+public record LogParam(
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
+    LocalDateTime logDateTime
+    , Long taskId
+    , String taskName
+    , Long logId
+    , int fromLineNum) {
 
 }

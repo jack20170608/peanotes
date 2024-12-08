@@ -1,0 +1,14 @@
+### 1. the hello world
+GET {{baseUrl}}/hello
+
+### 2.
+POST {{baseUrl}}/task/api/callback
+Content-Type: application/json
+Accept: application/json
+
+[{
+  "logId" : 100,
+  "logDateTime" : "2024-11-12 08:08:08.000",
+  "handleCode" : 200,
+  "handleMsg" : "OK"
+}]

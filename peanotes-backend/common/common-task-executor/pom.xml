@@ -22,6 +22,7 @@
         <dependency>
             <groupId>io.muserver</groupId>
             <artifactId>mu-server</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

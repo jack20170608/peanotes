@@ -130,7 +130,7 @@ public class WebServerBootstrap {
             .restHandler(operationHandler, systemHandler, taskHandler)
             .addCustomReader(new JacksonJsonProvider())
             .addCustomWriter(new JacksonJsonProvider())
-            .withCollectionParameterStrategy(CollectionParameterStrategy.SPLIT_ON_COMMA)
+            .withCollectionParameterStrategy(CollectionParameterStrategy.NO_TRANSFORM)
             .withOpenApiHtmlUrl("/api.html")
             .withOpenApiJsonUrl("/openapi.json")
             .addExceptionMapper(ClientErrorException.class, e -> Response.status(Response.Status.BAD_REQUEST.getStatusCode())

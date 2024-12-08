@@ -13,10 +13,4 @@ public class AppTest {
     public void test() {
         assertThat(true).isTrue();
     }
-
-    @Test
-    public void testFiles(){
-        assertThat(Files.exists(Paths.get("c:\\"))).isTrue();
-        assertThat(Files.exists(Paths.get("d:\\jack\\123"))).isTrue();
-    }
 }

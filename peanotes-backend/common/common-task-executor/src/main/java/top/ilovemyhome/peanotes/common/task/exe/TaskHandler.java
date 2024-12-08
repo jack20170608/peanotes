@@ -1,14 +1,21 @@
 package top.ilovemyhome.peanotes.common.task.exe;
 
+import static top.ilovemyhome.peanotes.common.task.exe.processor.TaskProcessor.log;
+
 public interface TaskHandler {
 
-    void handle() throws Exception;
 
-    default void init() throws Exception {
-        //do nothing
+    default void handle() {
+        log("Start handle...");
+        doHandle();
+        log("Handle successfully...");
     }
 
-    default void destroy() throws Exception {
-        //do nothing
-    }
+
+    void doHandle();
+
+    default void init(){}
+
+    default void destroy(){}
+
 }
