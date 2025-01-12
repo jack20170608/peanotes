@@ -4,10 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -54,6 +57,21 @@ public class FileHelperTest {
             });
             count = failCallbackFileStreamSupplier.get().count();
         }
+    }
+
+    @Test
+    public void testAppendFile() throws Exception{
+        Path fooFile = tempPath.resolve("foo.txt");
+        IntStream.of(1,2,3).boxed().forEach(i -> {
+            try {
+                Files.writeString(fooFile, i.toString(), StandardCharsets.UTF_8
+                    , StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        assertThat(Files.readString(fooFile, StandardCharsets.UTF_8)).isEqualTo("""
+            123""");
     }
 
     @TempDir

@@ -20,13 +20,14 @@ public class TaskExecutorContextTest {
     @Test
     public void testCreateTaskExecutorContextWithAllDefault() {
         TaskExecutorContext context1 = TaskExecutorContext.builder()
+            .withSslEnabled(true)
             .withHandlerBeans(List.of(new SimpleTask()))
+            .withCreateMuServer(false)
             .withFqdn("localhost")
-            .withPort(12580)
             .withListOfAdmin(List.of("admin1.jack007.top", "admin2.jack007.top"))
             .build();
         assertThat(context1.getAppName()).isEqualTo(TaskExecutorContext.DEFAULT_APP_NAME);
-        assertThat(context1.uri().toString()).isEqualTo("https://localhost:12580/task");
+        assertThat(context1.getUri().toString()).isEqualTo("https://localhost:12580/task");
         assertThat(context1.getListOfAdmin()).isEqualTo(List.of("admin1.jack007.top", "admin2.jack007.top"));
         Path defaultRootPath = TaskExecutorContext.DEFAULT_ROOT_PATH;
         assertThat(context1.getLogRootPath()).isEqualTo(defaultRootPath.resolve("logs"));
@@ -41,16 +42,16 @@ public class TaskExecutorContextTest {
         Path rootPath = tempRootPath.resolve("t1");
         TaskExecutorContext context1 = TaskExecutorContext.builder()
             .withAppName("app1")
-            .withSchema("HTTP")
+            .withSslEnabled(false)
             .withFqdn("task1.jack007.top")
             .withHandlerBeans(List.of(new SimpleTask()))
             .withPort(10000)
-            .withPath("/some-path/task")
+            .withContextPath("/some-path/task")
             .withListOfAdmin(List.of("admin1.jack007.top", "admin2.jack007.top"))
             .withRootPath(rootPath)
             .build();
         assertThat(context1.getAppName()).isEqualTo("app1");
-        assertThat(context1.uri().toString()).isEqualTo("http://task1.jack007.top:10000/some-path/task");
+        assertThat(context1.getUri().toString()).isEqualTo("http://task1.jack007.top:10000/some-path/task");
         assertThat(context1.getListOfAdmin()).isEqualTo(List.of("admin1.jack007.top", "admin2.jack007.top"));
         assertThat(context1.getLogRootPath()).isEqualTo(rootPath.resolve("logs"));
         assertThat(context1.getScriptSourcePath()).isEqualTo(rootPath.resolve("scripts"));
@@ -64,9 +65,15 @@ public class TaskExecutorContextTest {
         Path rootPath = tempRootPath.resolve("t2");
         TaskExecutorContext context2 = TaskExecutorContext.builder()
             .withAppName("app2")
+            .withCreateMuServer(true)
             .withFqdn("task1.jack007.top")
-            .withHandlerBeans(List.of(new SimpleTask()))
+            .withSslEnabled(true)
+            .withKeystorePath("/some-path/foo.jks")
+            .withKeystorePassword("1234")
+            .withKeyPassword("4321")
             .withPort(10000)
+            .withContextPath("/some-path/task")
+            .withHandlerBeans(List.of(new SimpleTask()))
             .withListOfAdmin(List.of("admin1.jack007.top", "admin2.jack007.top"))
             .withRootPath(rootPath)
             .withLogRootPath(rootPath.resolve("logs/12345"))
@@ -74,7 +81,14 @@ public class TaskExecutorContextTest {
             .withFailCallbackFilePath(rootPath.resolve("callback/20241128"))
             .build();
         assertThat(context2.getAppName()).isEqualTo("app2");
-        assertThat(context2.uri().toString()).isEqualTo("https://task1.jack007.top:10000/task");
+        assertThat(context2.isCreateMuServer()).isTrue();
+        assertThat(context2.isSslEnabled()).isTrue();
+        assertThat(context2.getFqdn()).isEqualTo("task1.jack007.top");
+        assertThat(context2.getKeystorePath()).isEqualTo("/some-path/foo.jks");
+        assertThat(context2.getKeystorePassword()).isEqualTo("1234");
+        assertThat(context2.getKeyPassword()).isEqualTo("4321");
+        assertThat(context2.getContextPath()).isEqualTo("/some-path/task");
+        assertThat(context2.getUri().toString()).isEqualTo("https://task1.jack007.top:10000/some-path/task");
         assertThat(context2.getListOfAdmin()).isEqualTo(List.of("admin1.jack007.top", "admin2.jack007.top"));
         assertThat(context2.getFailCallbackFilePath()).isEqualTo(rootPath.resolve("callback/20241128"));
         assertThat(context2.getTaskHandler("simpleHandler")).isInstanceOf(MethodTaskHandler.class);

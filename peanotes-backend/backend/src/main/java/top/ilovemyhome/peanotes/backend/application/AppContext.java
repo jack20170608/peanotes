@@ -22,7 +22,8 @@ import java.util.Map;
 
 public class AppContext {
 
-    public AppContext(Config config) {
+    public AppContext(String env, Config config) {
+        this.env = env;
         this.config = config;
     }
 
@@ -86,6 +87,10 @@ public class AppContext {
         return config.getString("name");
     }
 
+    public String getEnv() {
+        return env;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> T getBean(String beanName, Class<T> beanClass) {
         return (T) BEAN_FACTORY.getOrDefault(beanClass, (T) BEAN_NAME_FACTORY.get(beanName));
@@ -93,6 +98,7 @@ public class AppContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppContext.class);
 
+    private final String env;
     private final Config config;
 
     private final Map<Class<?>, Object> BEAN_FACTORY = new HashMap<>();

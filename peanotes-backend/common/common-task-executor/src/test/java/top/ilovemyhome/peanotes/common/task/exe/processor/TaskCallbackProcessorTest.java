@@ -35,7 +35,9 @@ public class TaskCallbackProcessorTest {
             .withListOfAdmin(List.of(muServer.uri().toString()))
             .withRootPath(rootPath)
             .build();
-        taskExecutor= TaskExecutor.of(executorContext);
+        taskExecutor= TaskExecutor.builder()
+            .withTaskExecutorContext(executorContext)
+            .build();
         System.out.println(rootPath.toString());
     }
 

@@ -1,10 +1,15 @@
 package top.ilovemyhome.peanotes.common.task.exe.tasks;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.ilovemyhome.peanotes.common.task.exe.TaskContext;
 import top.ilovemyhome.peanotes.common.task.exe.domain.ITask;
 
 import java.util.concurrent.TimeUnit;
+
+import static top.ilovemyhome.peanotes.common.task.exe.TaskExecutor.CONTEXT;
 
 
 public class SimpleTask {
@@ -13,7 +18,16 @@ public class SimpleTask {
 
     @ITask("helloWorld")
     public void helloWorld() {
-        LOGGER.info("Hello World!");
+        TaskContext taskContext = CONTEXT.get();
+        FileAppender<ILoggingEvent> fileAppender = taskContext.getLogFileAppender();
+        ((ch.qos.logback.classic.Logger) LOGGER).addAppender(fileAppender);
+        try {
+            LOGGER.info("Hello World!");
+        }catch (Throwable throwable){
+            assert true;
+        }finally {
+            ((ch.qos.logback.classic.Logger) LOGGER).detachAppender(fileAppender);
+        }
     }
 
     @ITask("simpleHandler")

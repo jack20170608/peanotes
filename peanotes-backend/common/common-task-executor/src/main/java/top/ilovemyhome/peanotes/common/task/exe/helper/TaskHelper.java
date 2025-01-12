@@ -7,32 +7,35 @@ import org.slf4j.helpers.MessageFormatter;
 import top.ilovemyhome.peanotes.backend.common.utils.LocalDateUtils;
 import top.ilovemyhome.peanotes.common.task.exe.TaskContext;
 import top.ilovemyhome.peanotes.common.task.exe.domain.enums.HandlerStatus;
-import top.ilovemyhome.peanotes.common.task.exe.processor.TaskProcessor;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import static top.ilovemyhome.peanotes.common.task.exe.TaskExecutor.CONTEXT;
+
+
 public class TaskHelper {
 
-    public static boolean log(Path logFilePath, String appendLogPattern, Object... appendLogArguments) {
-        FormattingTuple ft = MessageFormatter.arrayFormat(appendLogPattern, appendLogArguments);
-        String appendLog = ft.getMessage();
-        StackTraceElement callInfo = new Throwable().getStackTrace()[1];
-        return logDetail(logFilePath, callInfo, appendLog);
-    }
-
-    public static boolean log(Path logFilePath, Throwable e) {
-        StringWriter stringWriter = new StringWriter();
-        e.printStackTrace(new PrintWriter(stringWriter));
-        String appendLog = stringWriter.toString();
-
-        StackTraceElement callInfo = new Throwable().getStackTrace()[1];
-        return logDetail(logFilePath, callInfo, appendLog);
-    }
+//    public static boolean log(Path logFilePath, String appendLogPattern, Object... appendLogArguments) {
+//        FormattingTuple ft = MessageFormatter.arrayFormat(appendLogPattern, appendLogArguments);
+//        String appendLog = ft.getMessage();
+//        StackTraceElement callInfo = new Throwable().getStackTrace()[1];
+//        return logDetail(logFilePath, callInfo, appendLog);
+//    }
+//
+//    public static boolean log(Path logFilePath, Throwable e) {
+//        StringWriter stringWriter = new StringWriter();
+//        e.printStackTrace(new PrintWriter(stringWriter));
+//        String appendLog = stringWriter.toString();
+//
+//        StackTraceElement callInfo = new Throwable().getStackTrace()[1];
+//        return logDetail(logFilePath, callInfo, appendLog);
+//    }
 
     private static boolean logDetail(Path logFilePath, StackTraceElement callInfo, String appendLog) {
         StringBuffer stringBuffer = new StringBuffer();
@@ -65,7 +68,8 @@ public class TaskHelper {
             }
         }
         try {
-            Files.writeString(logFilePath, appendLog + "\r\n", StandardCharsets.UTF_8);
+            Files.writeString(logFilePath, appendLog + "\r\n", StandardCharsets.UTF_8
+                , StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         }catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -101,7 +105,7 @@ public class TaskHelper {
     }
 
     public static boolean handleResult(HandlerStatus handlerStatus, String handleMsg) {
-        TaskContext taskContext = TaskProcessor.CONTEXT.get();
+        TaskContext taskContext = CONTEXT.get();
         if (taskContext == null) {
             return false;
         }

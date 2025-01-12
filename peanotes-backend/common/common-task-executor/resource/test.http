@@ -1,7 +1,61 @@
 ### 1. the hello world
-GET {{baseUrl}}/hello
+GET {{baseUrl}}/foo/hello
 
-### 2.
+
+### 2. beat
+GET {{baseUrl}}/foo/task/v1/beat
+Accept: text/plain
+
+### 3. idleBeat
+POST {{baseUrl}}/foo/task/v1/idleBeat
+Content-Type: application/json
+Accept: application/json
+
+{
+  "jobId": 100
+}
+
+### 4.1 run the helloworld handler
+POST {{baseUrl}}/foo/task/v1/run
+Content-Type: application/json
+Accept: application/json
+
+{
+  "jobId" : 1,
+  "executorHandler" : "helloWorld",
+  "executorParams" : "p1",
+  "executorBlockStrategy" : "DISCARD_LATER",
+  "executorTimeout" : 3600.000000000,
+  "logId" : 1001,
+  "logDateTime" : "2024-11-12 14:36:38.000",
+  "taskType" : "BEAN",
+  "scriptSource" : "ping localhost",
+  "scriptUpdatetime" : "2024-10-01 08:08:18.000",
+  "broadcastIndex" : 1,
+  "broadcastTotal" : 8
+}
+
+### 4.2 run the simpleHandler
+POST {{baseUrl}}/foo/task/v1/run
+Content-Type: application/json
+Accept: application/json
+
+{
+  "jobId" : 2,
+  "executorHandler" : "simpleHandler",
+  "executorParams" : "p1",
+  "executorBlockStrategy" : "DISCARD_LATER",
+  "executorTimeout" : 3600.000000000,
+  "logId" : 2001,
+  "logDateTime" : "2024-11-12 14:36:38.000",
+  "taskType" : "BEAN",
+  "scriptSource" : "ping localhost",
+  "scriptUpdatetime" : "2024-10-01 08:08:18.000",
+  "broadcastIndex" : 1,
+  "broadcastTotal" : 8
+}
+
+### 4. others
 POST {{baseUrl}}/task/api/callback
 Content-Type: application/json
 Accept: application/json

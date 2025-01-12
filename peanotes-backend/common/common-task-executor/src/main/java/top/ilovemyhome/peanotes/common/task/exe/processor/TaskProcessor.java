@@ -1,23 +1,26 @@
 package top.ilovemyhome.peanotes.common.task.exe.processor;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.common.task.exe.*;
 import top.ilovemyhome.peanotes.common.task.exe.domain.HandleCallbackParam;
 import top.ilovemyhome.peanotes.common.task.exe.domain.enums.HandlerStatus;
 import top.ilovemyhome.peanotes.common.task.exe.domain.TriggerParam;
+import top.ilovemyhome.peanotes.common.task.exe.handler.TaskHandler;
 import top.ilovemyhome.peanotes.common.task.exe.helper.TaskHelper;
 
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static top.ilovemyhome.peanotes.common.task.exe.Constants.MAX_IDLE_POLL_TIMES;
+import static top.ilovemyhome.peanotes.common.task.exe.TaskExecutor.CONTEXT;
 
 public interface TaskProcessor extends Runnable, LifeCycle {
-    InheritableThreadLocal<TaskContext> CONTEXT = new InheritableThreadLocal<>();
+
 
     void pushTriggerQueue(TriggerParam triggerParam);
 
@@ -27,17 +30,6 @@ public interface TaskProcessor extends Runnable, LifeCycle {
 
     TaskHandler getTaskHandler();
 
-    static void log(String appendLogPattern, Object... appendLogArguments) {
-        TaskContext taskContext = CONTEXT.get();
-        Path logFilePath = taskContext.getTaskLogFilePath();
-        TaskHelper.log(logFilePath, appendLogPattern, appendLogArguments);
-    }
-
-    static void log(Throwable e) {
-        TaskContext taskContext = CONTEXT.get();
-        Path logFilePath = taskContext.getTaskLogFilePath();
-        TaskHelper.log(logFilePath, e);
-    }
 
     static Builder builder() {
         return new Builder();
@@ -90,7 +82,7 @@ class TaskProcessorImpl implements TaskProcessor {
     private String stopReason;
 
     private boolean running = false;    // if running job
-    private int idleTimes = 0;            // idel times
+    private int idleTimes = 0;          // idle times
 
 
     public TaskProcessorImpl(TaskExecutor taskExecutor, Long taskId, TaskHandler handler) {
@@ -183,12 +175,17 @@ class TaskProcessorImpl implements TaskProcessor {
             .withTaskExecutor(taskExecutor)
             .withTaskId(triggerParam.jobId())
             .withLogId(triggerParam.logId())
+            .withTaskParam(triggerParam.executorParams())
             .withTaskName(triggerParam.executorHandler())
             .withShardIndex(triggerParam.broadcastIndex())
             .withShardTotal(triggerParam.broadcastTotal())
             .build();
         CONTEXT.set(taskContext);
-        TaskProcessor.log("----------- Task execute start ----------------- Param:" + taskContext.getTaskParam());
+        //Attach the log appender
+        Logger logger = taskContext.getLogger();
+        //Customise the logger appender
+        logger.info("----------- Task execute start ----------------- ");
+        logger.info("Param is {}." ,taskContext.getTaskParam());
 
         //2. check if have timeout parameter setup
         Duration timeoutDuration = triggerParam.executorTimeout();
@@ -207,18 +204,19 @@ class TaskProcessorImpl implements TaskProcessor {
                     futureThread.start();
                     result = futureTask.get(timeoutDuration.toSeconds(), TimeUnit.SECONDS);
                 } catch (TimeoutException e) {
-                    TaskProcessor.log("-----------task execute timeout-----------------");
+                    logger.warn("-----------Task execute timeout-----------------");
                     throw e;
                 } finally {
                     futureThread.interrupt();
                 }
-                TaskProcessor.log("Task execute result is {}", result);
+                logger.info("Task execute result is {}", result);
+                logger.info("----------- Task execute successfully ----------------- ");
             } else {
                 handler.handle();
             }
         } catch (Throwable t) {
-            TaskProcessor.log(t);
-            LOGGER.error("Task execution failure.", t);
+            logger.error("Task execution failure.", t);
+            logger.info("----------- Task execute failure ----------------- ");
             throw new TaskExecuteException("Task execute failure", t);
         }
     }

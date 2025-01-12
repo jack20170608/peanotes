@@ -1,6 +1,7 @@
 package top.ilovemyhome.peanotes.common.task.exe.processor;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
@@ -10,6 +11,7 @@ import top.ilovemyhome.peanotes.common.task.exe.*;
 import top.ilovemyhome.peanotes.common.task.exe.domain.HandleCallbackParam;
 import top.ilovemyhome.peanotes.common.task.exe.domain.TriggerParam;
 import top.ilovemyhome.peanotes.common.task.exe.domain.enums.ExecutorBlockStrategyEnum;
+import top.ilovemyhome.peanotes.common.task.exe.handler.TaskHandler;
 import top.ilovemyhome.peanotes.common.task.exe.tasks.SimpleTask;
 
 import java.nio.file.Path;
@@ -24,6 +26,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static top.ilovemyhome.peanotes.common.task.exe.Constants.MAX_IDLE_POLL_TIMES;
+import static top.ilovemyhome.peanotes.common.task.exe.TaskExecutor.CONTEXT;
 
 public class TaskProcessorTest {
 
@@ -39,8 +42,12 @@ public class TaskProcessorTest {
             .withHandlerBeans(taskBeans)
             .build();
         taskExecutor = Mockito.mock(TaskExecutor.class);
-        taskCallbackProcessor = Mockito.mock(TaskCallbackProcessor.class);
         when(taskExecutor.getContext()).thenReturn(taskExecutorContext);
+    }
+
+    @BeforeEach
+    public void reset(){
+        taskCallbackProcessor = Mockito.mock(TaskCallbackProcessor.class);
         when(taskExecutor.getCallbackProcessor()).thenReturn(taskCallbackProcessor);
     }
 
@@ -55,10 +62,10 @@ public class TaskProcessorTest {
                 .withShardIndex(1)
                 .withShardTotal(9)
                 .build();
-            TaskProcessor.CONTEXT.set(t1Context);
+            CONTEXT.set(t1Context);
             //Create sub thread
             Thread subThread = new Thread(() -> {
-                TaskContext subCtx = TaskProcessor.CONTEXT.get();
+                TaskContext subCtx = CONTEXT.get();
                 assertThat(subCtx).isEqualTo(t1Context);
             });
             subThread.start();
@@ -149,7 +156,6 @@ public class TaskProcessorTest {
 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProcessorTest.class);
-
 
     @TempDir
     private static Path tempRootPath;

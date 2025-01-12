@@ -3,8 +3,9 @@ package top.ilovemyhome.peanotes.common.task.exe.shell;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.io.TempDir;
+import top.ilovemyhome.peanotes.common.task.exe.handler.shell.ExecutionResult;
+import top.ilovemyhome.peanotes.common.task.exe.handler.shell.ShellExecutor;
 
-import javax.xml.stream.events.StartDocument;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

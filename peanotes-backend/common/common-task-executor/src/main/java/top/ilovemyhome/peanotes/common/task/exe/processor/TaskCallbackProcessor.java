@@ -36,24 +36,26 @@ public interface TaskCallbackProcessor extends LifeCycle {
 
     int size();
 
-    static Builder builder(){
+    static Builder builder() {
         return new Builder();
     }
 
-    class Builder{
+    class Builder {
         private TaskExecutor taskExecutor;
-        public Builder withTaskExecutor(TaskExecutor taskExecutor){
+
+        public Builder withTaskExecutor(TaskExecutor taskExecutor) {
             this.taskExecutor = taskExecutor;
             return this;
         }
-        public TaskCallbackProcessor build(){
+
+        public TaskCallbackProcessor build() {
             return new TaskCallbackProcessorImpl(taskExecutor);
         }
     }
 }
 
 //The default implementation
-class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
+class TaskCallbackProcessorImpl implements TaskCallbackProcessor {
 
     TaskCallbackProcessorImpl(TaskExecutor taskExecutor) {
         this.taskExecutor = taskExecutor;
@@ -77,8 +79,7 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
             try {
                 validate();
                 doStart();
-            }
-            catch (Throwable throwable) {
+            } catch (Throwable throwable) {
                 stateRef.set(State.STOPPED);
                 throw throwable;
             }
@@ -141,6 +142,7 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
     }
 
     private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent) {
+
         for (HandleCallbackParam callbackParam : callbackParamList) {
             Path taskLogFilePath = TaskExecutorHelper.taskLogFilePath(
                 taskExecutor.getContext().getLogRootPath()
@@ -149,14 +151,16 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
                 , LocalDate.now()
                 , callbackParam.logId()
             );
-            TaskHelper.log(taskLogFilePath, logContent);
+            //todo by jack. should use a centralize logger strategy
+//            TaskHelper.log(taskLogFilePath, logContent);
         }
     }
 
     private Path getFailCallbackFilepath() {
         Path failCallbackFileDir = this.taskExecutor.getContext().getFailCallbackFilePath();
         return failCallbackFileDir.resolve(
-            String.format("fail-callback-%s-%s.json", LocalDateUtils.format(LocalDateTime.now(), UNSIGNED_TIMESTAMP_PATTERN)));
+            String.format("fail-callback-%s-%s.json"
+                , LocalDateUtils.format(LocalDateTime.now(), UNSIGNED_TIMESTAMP_PATTERN)));
     }
 
     private void appendFailCallbackFile(List<HandleCallbackParam> callbackParamList) {
@@ -165,7 +169,7 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
         }
         String jsonStr = JacksonUtil.toJson(callbackParamList);
         try {
-            Files.writeString(getFailCallbackFilepath(), jsonStr, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.writeString(getFailCallbackFilepath(), jsonStr, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
         } catch (IOException e) {
             LOGGER.error("Fail to persist the callback list, please handler manually.", e);
             LOGGER.info("-----------------------------------------------------------------");
@@ -185,7 +189,7 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
                     String fileName = p.getFileName().toString();
                     return fileName.startsWith("fail-callback-") && fileName.endsWith(".json");
                 });
-            }catch (IOException e) {
+            } catch (IOException e) {
                 throw new TaskExecuteException("File list failure.", e);
             }
         };
@@ -221,14 +225,14 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
         }
     }
 
-    private void validate(){
-        if (CollectionUtil.isEmpty(taskExecutor.getTaskAdmins()))  {
+    private void validate() {
+        if (CollectionUtil.isEmpty(taskExecutor.getTaskAdmins())) {
             LOGGER.warn("Executor callback processor init fail, adminAddresses are empty.");
             throw new IllegalArgumentException("AdminAddresses is empty.");
         }
     }
 
-    private void doStart(){
+    private void doStart() {
         // callback
         triggerCallbackThread = new Thread(() -> {
 
@@ -298,7 +302,7 @@ class TaskCallbackProcessorImpl implements TaskCallbackProcessor{
 
     private final TaskExecutor taskExecutor;
 
-    private final LinkedBlockingQueue<HandleCallbackParam>  callBackQueue;
+    private final LinkedBlockingQueue<HandleCallbackParam> callBackQueue;
     private Thread triggerCallbackThread;
     private Thread triggerRetryCallbackThread;
     //Flag to stop the thread

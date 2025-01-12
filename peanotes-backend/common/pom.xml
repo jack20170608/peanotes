@@ -23,6 +23,7 @@
         <module>common-task</module>
         <module>common-task-executor</module>
         <module>common-task-admin</module>
+        <module>mu-server-utils</module>
     </modules>
 
 </project>

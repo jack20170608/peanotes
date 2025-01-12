@@ -1,6 +1,8 @@
 package top.ilovemyhome.peanotes.common.task.exe;
 
 import jakarta.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.backend.common.json.JacksonUtil;
 import top.ilovemyhome.peanotes.backend.common.http.HttpUtils;
 import top.ilovemyhome.peanotes.common.task.exe.domain.HandleCallbackParam;
@@ -89,6 +91,7 @@ class TaskAdminImpl implements TaskAdmin {
     public TaskResponse register(RegistryParam registryParam) {
         URI uri = baseUri.resolve(REGISTER_URI);
         String jsonBody = JacksonUtil.toJson(registryParam);
+        logger.info("Register to {} for {}.", uri, jsonBody);
         HttpResponse<String> response = HttpUtils.post(uri, timeout
             , Map.of("Content-Type", MediaType.APPLICATION_JSON, "Accept", MediaType.APPLICATION_JSON)
             , jsonBody);
@@ -99,6 +102,7 @@ class TaskAdminImpl implements TaskAdmin {
     public TaskResponse unRegister(RegistryParam registryParam) {
         URI uri = baseUri.resolve(UNREGISTER_URI);
         String jsonBody = JacksonUtil.toJson(registryParam);
+        logger.info("unRegister to {} for {}.", uri, jsonBody);
         HttpResponse<String> response =  HttpUtils.post(uri, timeout
             , Map.of("Content-Type", MediaType.APPLICATION_JSON, "Accept", MediaType.APPLICATION_JSON)
             , jsonBody);
@@ -129,5 +133,6 @@ class TaskAdminImpl implements TaskAdmin {
     private final String adminServerUrl;
     private final String accessToken;
     private final int timeout = 5;
+    private static final Logger logger = LoggerFactory.getLogger(TaskAdminImpl.class);
 
 }

@@ -2,7 +2,7 @@ package top.ilovemyhome.peanotes.common.task.exe.domain.enums;
 
 public enum TaskType {
 
-    BAEN("BEAN", false, null, null),
+    BEAN("BEAN", false, null, null),
     GLUE_GROOVY("GLUE(Java)", false, null, null),
     SHELL("Shell", true, "bash", ".sh"),
     PYTHON("Python", true, "python", ".py"),

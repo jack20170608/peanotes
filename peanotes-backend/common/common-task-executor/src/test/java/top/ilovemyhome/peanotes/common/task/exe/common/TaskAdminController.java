@@ -41,7 +41,7 @@ public class TaskAdminController {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("register")
     public Response register(RegistryParam registryParam) {
-        LOGGER.info("Register with parameter=[{}].", registryParam);
+        LOGGER.info("Register request with parameter=[{}].", registryParam);
         try {
             String appName = registryParam.appName();
             Set<String> addresses = nameAddressMap.getOrDefault(appName, Sets.newHashSet());
@@ -60,7 +60,7 @@ public class TaskAdminController {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("unregister")
     public Response unregister(RegistryParam registryParam) {
-        LOGGER.info("Unregister with parameter=[{}].", registryParam);
+        LOGGER.info("Unregister request with parameter=[{}].", registryParam);
         try {
             String appName = registryParam.appName();
             Set<String> addresses = nameAddressMap.get(appName);

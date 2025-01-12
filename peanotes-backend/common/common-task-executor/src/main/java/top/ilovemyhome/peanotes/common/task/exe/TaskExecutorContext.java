@@ -1,11 +1,13 @@
 package top.ilovemyhome.peanotes.common.task.exe;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.common.task.exe.domain.ITask;
 import top.ilovemyhome.peanotes.common.task.exe.handler.MethodTaskHandler;
+import top.ilovemyhome.peanotes.common.task.exe.handler.TaskHandler;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -23,20 +25,23 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static top.ilovemyhome.peanotes.backend.common.utils.NetUtil.findAvailablePort;
 
-public interface TaskExecutorContext {
+public interface TaskExecutorContext extends WebContext {
 
     String DEFAULT_APP_NAME = "DefaultTaskExecutor";
     int DEFAULT_PORT = 12580;
-    String DEFAULT_PATH = "/task";
-    String DEFAULT_SCHEMA = "https";
+    String DEFAULT_CONTEXT_PATH = "/task";
+    String DEFAULT_FQDN = "localhost";
 
     static DefaultBuilder builder() {
         return new DefaultBuilder();
     }
 
-    URI uri();
-
     String getAppName();
+
+    void setTaskExecutor(TaskExecutor taskExecutor);
+    TaskExecutor getTaskExecutor();
+
+    boolean isCreateMuServer();
 
     TaskHandler getTaskHandler(String name);
 
@@ -53,10 +58,18 @@ public interface TaskExecutorContext {
 
     class DefaultBuilder {
         private String appName;
-        private String schema;
-        private String fqdn;
-        private int port;
-        private String path;
+
+        //Need to build the server
+        private boolean createMuServer = false;
+        private String fqdn = DEFAULT_FQDN;
+        private boolean sslEnabled = false;
+        private String keystorePath;
+        private String keystorePassword;
+        private String keyPassword;
+        private int port = DEFAULT_PORT;
+        private String contextPath = DEFAULT_CONTEXT_PATH;
+
+        //The uri that registered to the admin server
         private URI uri;
         private List<String> listOfAdmin;
         private List<Object> handlerBeans;
@@ -75,13 +88,8 @@ public interface TaskExecutorContext {
             return this;
         }
 
-        public DefaultBuilder withUri(String uri) {
-            this.uri = URI.create(uri);
-            return this;
-        }
-
-        public DefaultBuilder withSchema(String schema) {
-            this.schema = schema;
+        public DefaultBuilder withCreateMuServer(boolean createMuServer) {
+            this.createMuServer = createMuServer;
             return this;
         }
 
@@ -90,13 +98,42 @@ public interface TaskExecutorContext {
             return this;
         }
 
+        public DefaultBuilder withSslEnabled(boolean sslEnabled) {
+            this.sslEnabled = sslEnabled;
+            return this;
+        }
+
+        public DefaultBuilder withKeystorePath(String keystorePath) {
+            this.keystorePath = keystorePath;
+            return this;
+        }
+
+        public DefaultBuilder withKeystorePassword(String keystorePassword) {
+            this.keystorePassword = keystorePassword;
+            return this;
+        }
+
+        public DefaultBuilder withKeyPassword(String keyPassword) {
+            this.keyPassword = keyPassword;
+            return this;
+        }
+
         public DefaultBuilder withPort(int port) {
             this.port = port;
             return this;
         }
 
-        public DefaultBuilder withPath(String path) {
-            this.path = path;
+        public DefaultBuilder withContextPath(String contextPath) {
+            if (!StringUtils.startsWith(contextPath, "/")){
+                this.contextPath = "/" + contextPath;
+            }else {
+                this.contextPath = contextPath;
+            }
+            return this;
+        }
+
+        public DefaultBuilder withUri(URI uri) {
+            this.uri = uri;
             return this;
         }
 
@@ -134,17 +171,16 @@ public interface TaskExecutorContext {
             if (Objects.isNull(uri)) {
                 this.uri = genUri();
             }
-            return new TaskExecutorContextImpl(this.appName, this.uri, listOfAdmin, handlerBeans, rootPath, logRootPath, scriptSourcePath, failCallbackFilePath);
+            return new TaskExecutorContextImpl(this.appName, createMuServer
+                , fqdn, sslEnabled, keystorePath, keystorePassword, keyPassword
+                , port, contextPath, this.uri, listOfAdmin, handlerBeans, rootPath
+                , logRootPath, scriptSourcePath, failCallbackFilePath);
         }
 
         private URI genUri() {
-            if (StringUtils.equalsIgnoreCase(schema, "http")) {
-                this.schema = schema.toLowerCase();
-            } else {
-                this.schema = DEFAULT_SCHEMA;
-            }
-            if (StringUtils.isBlank(path)) {
-                this.path = DEFAULT_PATH;
+            String schema = this.sslEnabled ? "https" : "http";
+            if (StringUtils.isBlank(contextPath)) {
+                this.contextPath = DEFAULT_CONTEXT_PATH;
             }
             if (Objects.isNull(appName) || appName.isEmpty()) {
                 this.appName = DEFAULT_APP_NAME;
@@ -160,8 +196,7 @@ public interface TaskExecutorContext {
                 this.port = findAvailablePort(DEFAULT_PORT);
             }
             try {
-                URI baseUri = new URI(schema, null, fqdn, port, path, null, null);
-                return baseUri.resolve(path);
+                return new URI(schema, null, fqdn, port, contextPath, null, null);
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
@@ -172,25 +207,56 @@ public interface TaskExecutorContext {
 
 class TaskExecutorContextImpl implements TaskExecutorContext {
     private final String appName;
+    private final boolean createMuServer;
+    private final String fqdn;
+    private final boolean sslEnabled;
+    private final String keystorePath;
+    private final String keystorePassword;
+    private final String keyPassword;
+    private final String contextPath;
+    private final int port;
     private final URI uri;
     private final List<String> listOfAdmin;
     private final List<Object> handlerBeans;
-
     private final Path rootPath;
     private final Path logRootPath;
     private final Path scriptSourcePath;
     private final Path failCallbackFilePath;
 
     private Map<String, TaskHandler> taskHandlerRepository = new ConcurrentHashMap<>();
+    private transient TaskExecutor taskExecutor;
 
-    TaskExecutorContextImpl(String appName, URI uri, List<String> listOfAdmin
-        , List<Object> handlerBeans, Path rootPath, Path logRootPath
-        , Path scriptSourcePath, Path failCallbackFilePath) {
+    TaskExecutorContextImpl(String appName
+        , boolean createMuServer
+        , String fqdn
+        , boolean sslEnabled
+        , String keystorePath
+        , String keystorePassword
+        , String keyPassword
+        , int port
+        , String contextPath
+        , URI uri
+        , List<String> listOfAdmin
+        , List<Object> handlerBeans
+        , Path rootPath
+        , Path logRootPath
+        , Path scriptSourcePath
+        , Path failCallbackFilePath) {
         LOGGER.info("Initialize the executor context.");
         if (StringUtils.isBlank(appName)) {
             throw new IllegalArgumentException("AppName is empty.");
         }
+        //Need to create the web server inside, normally we don't
+        this.createMuServer = createMuServer;
+        this.fqdn = fqdn;
+        this.sslEnabled = sslEnabled;
+        this.keystorePath = keystorePath;
+        this.keystorePassword = keystorePassword;
+        this.keyPassword = keyPassword;
+        this.port = port;
+        this.contextPath = contextPath;
         this.appName = appName;
+
         if (Objects.isNull(uri)) {
             throw new IllegalArgumentException("Bad URI string provided.");
         }
@@ -236,15 +302,98 @@ class TaskExecutorContextImpl implements TaskExecutorContext {
         LOGGER.info("Executor context is {}.", this);
     }
 
-
     @Override
-    public URI uri() {
-        return this.uri;
+    public String toString() {
+        return "TaskExecutorContextImpl{" +
+            "failCallbackFilePath=" + failCallbackFilePath +
+            ", scriptSourcePath=" + scriptSourcePath +
+            ", logRootPath=" + logRootPath +
+            ", rootPath=" + rootPath +
+            ", listOfAdmin=" + listOfAdmin +
+            ", uri=" + uri +
+            ", contextPath='" + contextPath + '\'' +
+            ", keyPassword='" + keyPassword + '\'' +
+            ", keystorePassword='" + keystorePassword + '\'' +
+            ", keystorePath='" + keystorePath + '\'' +
+            ", sslEnabled=" + sslEnabled +
+            ", fqdn='" + fqdn + '\'' +
+            ", createMuServer=" + createMuServer +
+            ", appName='" + appName + '\'' +
+            '}';
     }
 
     @Override
     public String getAppName() {
         return this.appName;
+    }
+
+    @Override
+    public TaskExecutor getTaskExecutor() {
+        return this.taskExecutor;
+    }
+
+    @Override
+    public void setTaskExecutor(TaskExecutor taskExecutor){
+        if (Objects.isNull(this.taskExecutor)) {
+            this.taskExecutor = taskExecutor;
+        }
+    }
+
+    @Override
+    public boolean isCreateMuServer() {
+        return createMuServer;
+    }
+
+    @Override
+    public String getFqdn() {
+        return fqdn;
+    }
+
+    @Override
+    public boolean isSslEnabled() {
+        return sslEnabled;
+    }
+
+    @Override
+    public int getPort() {
+        return this.port;
+    }
+
+    @Override
+    public String getKeystorePath() {
+        return keystorePath;
+    }
+
+    @Override
+    public String getKeystorePassword() {
+        return keystorePassword;
+    }
+
+    @Override
+    public String getKeyPassword() {
+        return keyPassword;
+    }
+
+    @Override
+    public String getContextPath() {
+        return contextPath;
+    }
+
+    @Override
+    public URI getUri() {
+        return uri;
+    }
+
+    public Map<String, TaskHandler> getTaskHandlerRepository() {
+        return ImmutableMap.copyOf(taskHandlerRepository);
+    }
+
+    public Path getRootPath() {
+        return rootPath;
+    }
+
+    public List<Object> getHandlerBeans() {
+        return ImmutableList.copyOf(handlerBeans);
     }
 
     @Override
@@ -270,20 +419,6 @@ class TaskExecutorContextImpl implements TaskExecutorContext {
     @Override
     public Path getFailCallbackFilePath() {
         return failCallbackFilePath;
-    }
-
-    @Override
-    public String toString() {
-        return "TaskExecutorContextImpl{" +
-            "uri=" + uri +
-            ", listOfAdmin=" + listOfAdmin +
-            ", handlerBeans=" + handlerBeans +
-            ", rootPath=" + rootPath +
-            ", logRootPath=" + logRootPath +
-            ", scriptSourcePath=" + scriptSourcePath +
-            ", failCallbackFilePath=" + failCallbackFilePath +
-            ", taskHandlerRepository=" + taskHandlerRepository +
-            '}';
     }
 
 

@@ -3,6 +3,7 @@ package top.ilovemyhome.peanotes.common.task.exe;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,15 +30,18 @@ public class TaskExecutorTest {
     public static void initMock() {
         initTheTaskAdmin();
         taskExecutorContext = TaskExecutorContext.builder()
-            .withSchema("Http")
+            .withSslEnabled(false)
             .withAppName("foo")
             .withFqdn("localhost")
             .withPort(0)
+            .withCreateMuServer(true)
             .withListOfAdmin(List.of(adminServer.getMuServer().httpUri().toString()))
             .withRootPath(tempRootPath)
             .withHandlerBeans(initHandlerBeans())
             .build();
-        taskExecutor= TaskExecutor.of(taskExecutorContext);
+        taskExecutor= TaskExecutor.builder()
+            .withTaskExecutorContext(taskExecutorContext)
+            .build();
 
         assertThat(taskExecutor).isNotNull();
         assertThat(taskExecutor.getTaskAdmins()).isNotNull();
@@ -59,6 +63,7 @@ public class TaskExecutorTest {
 
 
     @Test
+    @Timeout(value = 5)
     public void testExecutorStartStop() throws InterruptedException {
         assertThat(taskExecutor.getState()).isEqualTo(LifeCycle.State.INITIALIZED);
         taskExecutor.start();
@@ -72,13 +77,15 @@ public class TaskExecutorTest {
             LOGGER.info("Wait for the executor started!");
             Thread.sleep(50);
         }
+        //Wait the 1st cycle register to the admin status
+        Thread.sleep(500);
         if (taskExecutor.isRegistered()) {
-            //Wait the 1st cycle register to the admin status
-            Thread.sleep(500);
             Set<String> registerDb = adminServer.getTaskAdminController().getAddressSet("foo");
             assertThat(registerDb.size()).isEqualTo(1);
-            URI uri = taskExecutorContext.uri();
+            URI uri = taskExecutorContext.getUri();
             assertThat(registerDb.contains(uri.toString()));
+        }else {
+            throw new RuntimeException("Not registered in time.");
         }
 
         taskExecutor.stop();
@@ -88,10 +95,12 @@ public class TaskExecutorTest {
         }
         assertThat(registryProcessor.getState()).isEqualTo(LifeCycle.State.STOPPED);
         assertThat(callbackProcessor.getState()).isEqualTo(LifeCycle.State.STOPPED);
+        Thread.sleep(500);
         if (taskExecutor.isStopped()){
-            Thread.sleep(500);
             Set<String> registerDb = adminServer.getTaskAdminController().getAddressSet("foo");
             assertThat(registerDb.size()).isEqualTo(0);
+        }else {
+            throw new RuntimeException("Stop not unregistered in time.");
         }
     }
 
@@ -104,7 +113,9 @@ public class TaskExecutorTest {
             .withListOfAdmin(List.of("foo"))
             .withRootPath(tempRootPath)
             .build();
-        TaskExecutor badExecutor = TaskExecutor.of(emptyAdminAddress);
+        TaskExecutor badExecutor = TaskExecutor.builder()
+            .withTaskExecutorContext(emptyAdminAddress)
+            .build();
         badExecutor.start();
 
         //Just wait until the first beat
@@ -131,7 +142,6 @@ public class TaskExecutorTest {
 
     private static void initTheTaskAdmin(){
         adminServer = new FooTaskAdminServer();
-        LOGGER.info("Http admin uri is {}.", adminServer.getMuServer().httpUri());
     }
 
 

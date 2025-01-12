@@ -1,7 +1,6 @@
 package top.ilovemyhome.peanotes.common.task.exe.processor;
 
 import io.muserver.MuServer;
-import org.apache.commons.lang3.ThreadUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -24,15 +23,18 @@ public class RegistryProcessorTest {
     @Test
     public void testRegisterAndUnregister() throws Exception {
         TaskExecutorContext executorContext = TaskExecutorContext.builder()
-            .withSchema("http")
+            .withSslEnabled(false)
             .withAppName(appName)
             .withFqdn(fqdn)
             .withPort(port)
             .withListOfAdmin(List.of(muServer.httpUri().toString()))
             .withRootPath(rootPath)
+            .withContextPath("/task")
             .build();
-        TaskExecutor taskExecutor = TaskExecutor.of(executorContext);
-        System.out.println(executorContext.uri().toString());
+        TaskExecutor taskExecutor = TaskExecutor.builder()
+            .withTaskExecutorContext(executorContext)
+            .build();
+        System.out.println(executorContext.getUri().toString());
         RegistryProcessor processor = RegistryProcessor.builder()
             .withTaskExecutor(taskExecutor)
             .build();
@@ -44,7 +46,7 @@ public class RegistryProcessorTest {
         }
         assertThat(taskExecutor.getContext().getListOfAdmin().size()).isEqualTo(1);
         assertThat(fooTaskAdminServer.taskAdminController.getAddressSet(appName))
-            .isEqualTo(Set.of(executorContext.uri().toString()));
+            .isEqualTo(Set.of(executorContext.getUri().toString()));
         processor.stop();
 
         counter = 5;
@@ -59,13 +61,17 @@ public class RegistryProcessorTest {
     @Test
     public void testExceptionalHandler() throws Exception{
         TaskExecutorContext executorContext = TaskExecutorContext.builder()
+            .withSslEnabled(true)
             .withAppName(appName)
             .withFqdn(fqdn)
             .withPort(port)
             .withListOfAdmin(List.of("foo-bar"))
             .withRootPath(rootPath.resolve("foo-bar"))
             .build();
-        TaskExecutor taskExecutor = TaskExecutor.of(executorContext);
+        System.out.println(executorContext.getUri().toString());
+        TaskExecutor taskExecutor = TaskExecutor.builder()
+            .withTaskExecutorContext(executorContext)
+            .build();
         RegistryProcessor processor = RegistryProcessor.builder()
             .withTaskExecutor(taskExecutor)
             .build();

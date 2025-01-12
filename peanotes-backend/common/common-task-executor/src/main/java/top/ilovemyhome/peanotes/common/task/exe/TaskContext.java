@@ -1,12 +1,20 @@
 package top.ilovemyhome.peanotes.common.task.exe;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.FileAppender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.common.task.exe.domain.enums.HandlerStatus;
 import top.ilovemyhome.peanotes.common.task.exe.helper.TaskExecutorHelper;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public interface TaskContext {
+
 
     Path getTaskLogFilePath();
 
@@ -19,6 +27,8 @@ public interface TaskContext {
     Long getTaskId();
 
     String getTaskName();
+    FileAppender<ILoggingEvent> getLogFileAppender();
+    Logger getLogger();
 
     Long getLogId();
 
@@ -81,6 +91,7 @@ public interface TaskContext {
 
 class TaskContextImpl implements TaskContext {
 
+    private static final Logger log = LoggerFactory.getLogger(TaskContextImpl.class);
     private final Long taskId;
     private final String taskName;
     private final Long logId;
@@ -91,6 +102,9 @@ class TaskContextImpl implements TaskContext {
     private final int shardTotal;
     private volatile HandlerStatus handlerStatus;
     private volatile String handlerMessage;
+
+    private final transient FileAppender<ILoggingEvent> logFileAppender;
+    private final transient Logger logger;
 
     public TaskContextImpl(TaskExecutor taskExecutor
         , Long taskId, String taskName, Long logId
@@ -115,7 +129,10 @@ class TaskContextImpl implements TaskContext {
             , taskName
             , this.logId
         );
+        this.logFileAppender = initFileAppender();
+        this.logger = initLogger();
     }
+
 
 
     @Override
@@ -131,6 +148,16 @@ class TaskContextImpl implements TaskContext {
     @Override
     public String getTaskName() {
         return this.taskName;
+    }
+
+    @Override
+    public FileAppender<ILoggingEvent> getLogFileAppender() {
+        return logFileAppender;
+    }
+
+    @Override
+    public Logger getLogger() {
+        return this.logger;
     }
 
     @Override
@@ -177,5 +204,28 @@ class TaskContextImpl implements TaskContext {
     @Override
     public void setHandlerMessage(String message) {
         this.handlerMessage = message;
+    }
+
+    private FileAppender<ILoggingEvent> initFileAppender(){
+        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+        PatternLayoutEncoder ple = new PatternLayoutEncoder();
+        ple.setPattern("%date %level [%thread] %logger{10} [%file:%line] %msg%n");
+        ple.setContext(lc);
+        ple.start();
+        FileAppender<ILoggingEvent> fileAppender = new FileAppender<ILoggingEvent>();
+        fileAppender.setFile(this.taskLogFilePath.toString());
+        fileAppender.setEncoder(ple);
+        fileAppender.setContext(lc);
+        fileAppender.start();
+        return fileAppender;
+    }
+
+    private Logger initLogger(){
+        //Customise the logger
+        String uuid = UUID.randomUUID().toString();
+        String loggerName = String.format("[%s]-[%s]-[%d]", uuid, taskName, this.logId);
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(loggerName);
+        logger.addAppender(logFileAppender);
+        return logger;
     }
 }

@@ -37,7 +37,7 @@ public class App {
         String rootConfig = "config/application.conf";
         String envConfig = "config/application-" + env + ".conf";
         Config config = ConfigLoader.loadConfig(rootConfig, envConfig);
-        this.appContext = new AppContext(config);
+        this.appContext = new AppContext(env, config);
         this.appContext.init();
     }
 

@@ -113,7 +113,7 @@ class RegistryProcessorImpl implements RegistryProcessor {
             LOGGER.error("Executor registry config fail, adminAddresses is null.");
             throw new IllegalArgumentException("Admin addresses is null");
         }
-        URI uri = taskExecutorContext.uri();
+        URI uri = taskExecutorContext.getUri();
         if (Objects.isNull(uri)) {
             LOGGER.error("Executor registry config fail, the uri is null.");
             throw new IllegalArgumentException("uri is null");
@@ -122,7 +122,7 @@ class RegistryProcessorImpl implements RegistryProcessor {
 
     private void doStart() {
         String appName = taskExecutorContext.getAppName();
-        final URI uri = taskExecutorContext.uri();
+        final URI uri = taskExecutorContext.getUri();
         registryThread = new Thread(() -> {
             long sleepTime = 50L;
             // registry
