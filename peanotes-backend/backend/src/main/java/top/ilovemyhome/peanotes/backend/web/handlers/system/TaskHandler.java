@@ -1,6 +1,5 @@
 package top.ilovemyhome.peanotes.backend.web.handlers.system;
 
-import com.sun.source.util.TaskEvent;
 import io.muserver.rest.Required;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -11,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.backend.application.AppContext;
 import top.ilovemyhome.peanotes.backend.common.task.*;
 import top.ilovemyhome.peanotes.backend.common.task.impl.StringTaskOutput;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrder;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecord;
 
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +43,7 @@ public class TaskHandler {
     @Path("/createOrder")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createOrder(SimpleTaskOrder simpleTaskOrder) {
+    public Response createOrder(TaskOrder simpleTaskOrder) {
         Long id = taskDagService.createOrder(simpleTaskOrder);
         simpleTaskOrder.setId(id);
         LOGGER.info("Created new task order {}", simpleTaskOrder);
@@ -53,7 +54,7 @@ public class TaskHandler {
     @Path("/updateOrder")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateOrder(SimpleTaskOrder simpleTaskOrder) {
+    public Response updateOrder(TaskOrder simpleTaskOrder) {
         String key = simpleTaskOrder.getKey();
         int updateStatus = taskDagService.updateOrderByKey(key, simpleTaskOrder);
         LOGGER.info("Updated task order {}, with result {}.", simpleTaskOrder, updateStatus);

@@ -10,6 +10,10 @@ import top.ilovemyhome.peanotes.backend.common.db.dao.common.SearchCriteria;
 import top.ilovemyhome.peanotes.backend.common.task.*;
 import top.ilovemyhome.peanotes.backend.common.task.dag.DagHelper;
 import top.ilovemyhome.peanotes.backend.common.task.dag.DagNode;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrder;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrderDao;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecord;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDao;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,14 +29,9 @@ public class TaskDagServiceImpl implements TaskDagService {
     }
 
     @Override
-    public boolean isOrdered(SimpleTaskOrder order) {
-        return taskOrderDao.findByKey(order.getKey()).isPresent();
-    }
-
-    @Override
-    public synchronized Long createOrder(SimpleTaskOrder taskOrder) {
+    public synchronized Long createOrder(TaskOrder taskOrder) {
         String orderKey = taskOrder.getKey();
-        Optional<SimpleTaskOrder> taskOrderOptional = taskOrderDao.findByKey(orderKey);
+        Optional<TaskOrder> taskOrderOptional = taskOrderDao.findByKey(orderKey);
         Long id = 0L;
         if (taskOrderOptional.isEmpty()) {
             id = taskOrderDao.create(taskOrder);
@@ -44,8 +43,10 @@ public class TaskDagServiceImpl implements TaskDagService {
     }
 
     @Override
-    public synchronized int updateOrderByKey(String orderKey, SimpleTaskOrder taskOrder) {
-        Optional<SimpleTaskOrder> taskOrderOptional = taskOrderDao.findByKey(orderKey);
+    public synchronized int updateOrderByKey(String orderKey, TaskOrder taskOrder) {
+        Objects.requireNonNull(orderKey);
+        Objects.requireNonNull(taskOrder);
+        Optional<TaskOrder> taskOrderOptional = taskOrderDao.findByKey(orderKey);
         int result;
         if (taskOrderOptional.isPresent()) {
             result = taskOrderDao.updateByKey(orderKey, taskOrder);
@@ -57,6 +58,7 @@ public class TaskDagServiceImpl implements TaskDagService {
 
     @Override
     public synchronized int deleteOrderByKey(String orderKey, boolean caseCade) {
+        Objects.requireNonNull(orderKey);
         final AtomicInteger result = new AtomicInteger(0);
         int count = countTaskByOrderKey(orderKey);
         if (count > 0) {
@@ -103,7 +105,7 @@ public class TaskDagServiceImpl implements TaskDagService {
             }
         });
         return jdbi.inTransaction(h -> {
-            Optional<SimpleTaskOrder> taskOrderOptional = taskOrderDao.findByKey(orderKey);
+            Optional<TaskOrder> taskOrderOptional = taskOrderDao.findByKey(orderKey);
             final List<Long> rs = new ArrayList<>();
             if (taskOrderOptional.isPresent()) {
                 Map<Long, TaskRecord> rMap = findTaskByOrderKey(orderKey).stream().collect(Collectors.toMap(TaskRecord::getId, Function.identity()));
@@ -159,10 +161,6 @@ public class TaskDagServiceImpl implements TaskDagService {
         return taskRecordDao.count(searchCriteria);
     }
 
-    @Override
-    public int deleteTaskByOrderKey(String orderKey) {
-        return taskRecordDao.deleteByOrderKey(orderKey);
-    }
 
     @Override
     public List<TaskRecord> getByIds(List<Long> listOfId) {
@@ -171,7 +169,6 @@ public class TaskDagServiceImpl implements TaskDagService {
             .build());
     }
 
-
     private List<TaskRecord> find(TaskSearchCriteria criteria) {
         LOGGER.info("Find task with criteria: {}.", criteria);
         return taskRecordDao.find(criteria);
@@ -179,34 +176,31 @@ public class TaskDagServiceImpl implements TaskDagService {
 
 
     @Override
-    public boolean isSuccess(SimpleTaskOrder order) {
-        boolean ordered = taskRecordDao.isOrdered(order.getKey());
+    public boolean isSuccess(String orderKey) {
+        boolean ordered = taskRecordDao.isOrdered(orderKey);
         if (!ordered) {
             return false;
         }
-        return taskRecordDao.isSuccess(order.getKey());
+        return taskRecordDao.isSuccess(orderKey);
     }
 
     @Override
-    public synchronized void load(SimpleTaskOrder taskOrder) {
-        Objects.requireNonNull(taskOrder);
-        String orderKey = taskOrder.getKey();
+    public synchronized void load(String orderKey) {
         if (StringUtils.isBlank(orderKey)) {
             throw new IllegalArgumentException("Task order key is empty");
         }
-        if (!isOrdered(taskOrder)) {
-            throw new IllegalStateException("Task not ordered for " + taskOrder);
+        if (!isOrdered(orderKey)) {
+            throw new IllegalStateException("Task not ordered for order key: "+ orderKey );
         }
         loadByOrderKey(orderKey);
     }
 
     @Override
-    public synchronized void start(SimpleTaskOrder taskOrder) {
-        Objects.requireNonNull(taskOrder);
-        String orderKey = taskOrder.getKey();
+    public synchronized void start(String orderKey) {
+        Objects.requireNonNull(orderKey);
         boolean loaded = taskOrderCache.containsKey(orderKey);
         if (!loaded) {
-            load(taskOrder);
+            load(orderKey);
         }
         ((List<Task>) taskOrderCache.get(orderKey)).stream().filter(a -> a.getTaskStatus() == TaskStatus.INIT)
             .filter(Task::isReady)
@@ -218,15 +212,8 @@ public class TaskDagServiceImpl implements TaskDagService {
 
     @Override
     public synchronized void loadAndStart(String orderKey){
-        Optional<SimpleTaskOrder> order = taskOrderDao.findByKey(orderKey);
-        order.ifPresentOrElse(this::loadAndStart, () -> {
-            throw new IllegalArgumentException("Cannot find task order with key: " + orderKey);
-        });
-    }
-    @Override
-    public synchronized void loadAndStart(SimpleTaskOrder taskOrder) {
-        load(taskOrder);
-        start(taskOrder);
+        load(orderKey);
+        start(orderKey);
     }
 
     @Override
@@ -316,7 +303,7 @@ public class TaskDagServiceImpl implements TaskDagService {
     private final TaskContext taskContext;
 
     private final TaskRecordDao taskRecordDao;
-    private final SimpleTaskOrderDao taskOrderDao;
+    private final TaskOrderDao taskOrderDao;
     private final Jdbi jdbi;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskDagServiceImpl.class);

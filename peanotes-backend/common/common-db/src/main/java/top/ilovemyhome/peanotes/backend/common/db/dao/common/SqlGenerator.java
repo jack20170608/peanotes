@@ -2,7 +2,6 @@ package top.ilovemyhome.peanotes.backend.common.db.dao.common;
 
 
 import org.apache.commons.lang3.StringUtils;
-import org.flywaydb.core.internal.database.base.Table;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Order;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Pageable;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.Sort;

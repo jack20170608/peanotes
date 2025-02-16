@@ -8,7 +8,6 @@ public class FooTaskContext extends TaskContext {
     private FooTaskContext(Jdbi jdbi) {
         super(jdbi);
     }
-
     private static FooTaskContext INSTANCE ;
 
     public synchronized static FooTaskContext getInstance(Jdbi jdbi){

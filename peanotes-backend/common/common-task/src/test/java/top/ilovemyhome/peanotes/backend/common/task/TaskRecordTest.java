@@ -2,6 +2,7 @@ package top.ilovemyhome.peanotes.backend.common.task;
 
 import org.junit.jupiter.api.Test;
 import top.ilovemyhome.peanotes.backend.common.json.JacksonUtil;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecord;
 
 import java.time.LocalDateTime;
 import java.util.Set;

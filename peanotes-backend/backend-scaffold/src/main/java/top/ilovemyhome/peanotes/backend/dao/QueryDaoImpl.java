@@ -62,7 +62,7 @@ public class QueryDaoImpl extends BaseDaoJdbiImpl<QueryResultV1> implements Quer
         try (Handle handle = jdbi.open()) {
             queryResult = handle.createQuery(sql)
                 .setFetchSize(fetchSize)
-                .setMaxFieldSize(fetchSize)
+                .setMaxRows(maxQueryResultSize)
                 .execute(((statementSupplier, ctx) -> {
                     try (ctx) {
                         long startTs = System.currentTimeMillis();

@@ -1,9 +1,11 @@
 package top.ilovemyhome.peanotes.backend.common.db.dao.sample.domain;
 
 
+import java.time.YearMonth;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,21 +14,41 @@ public class Bar {
     private Long id;
     private String name;
     private String others;
+    private UUID uuid;
+    private YearMonth billingMonth;
+    private Map<String,String> attributes;
+    private Map<String, Integer> intAttributes;
 
-    public Bar(Long id, String name, String others) {
+    public Bar(Long id, String name, String others,
+               UUID uuid, YearMonth billingMonth, Map<String, String> attributes,
+        Map<String,Integer> intAttributes) {
         this.id = id;
         this.name = name;
         this.others = others;
+        this.uuid = uuid;
+        this.billingMonth = billingMonth;
+        this.attributes = attributes;
+        this.intAttributes = intAttributes;
     }
 
     public static Bar of(String name, String others){
-        return new Bar(null, name, others);
+        return of(name, others,  UUID.randomUUID(), null, null, null);
+    }
+
+    public static Bar of(String name, String others, UUID uuid, YearMonth billingMonth
+        , Map<String, String> attributes, Map<String, Integer> intAttributes){
+        return new Bar(null, name, others, uuid, billingMonth, attributes, intAttributes);
     }
 
     public enum Field {
         id("ID", true),
         name("NAME"),
-        others("OTHERS");
+        others("OTHERS"),
+        uuid("UUID"),
+        billingMonth("BILLING_MONTH"),
+        attributes("ATTRIBUTES"),
+        intAttributes("INT_ATTRIBUTES"),
+        ;
 
         private final String dbColumn;
         private final boolean isId;
@@ -74,6 +96,21 @@ public class Bar {
         return id;
     }
 
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public YearMonth getBillingMonth() {
+        return billingMonth;
+    }
+
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public Map<String, Integer> getIntAttributes() {
+        return intAttributes;
+    }
 
     @Override
     public boolean equals(Object o) {

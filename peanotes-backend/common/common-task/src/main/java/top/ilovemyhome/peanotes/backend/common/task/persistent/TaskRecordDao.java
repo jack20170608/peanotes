@@ -1,6 +1,9 @@
-package top.ilovemyhome.peanotes.backend.common.task;
+package top.ilovemyhome.peanotes.backend.common.task.persistent;
 
 import top.ilovemyhome.peanotes.backend.common.db.dao.common.BaseDao;
+import top.ilovemyhome.peanotes.backend.common.task.TaskInput;
+import top.ilovemyhome.peanotes.backend.common.task.TaskOutput;
+import top.ilovemyhome.peanotes.backend.common.task.TaskStatus;
 import top.ilovemyhome.peanotes.backend.common.task.impl.Task;
 
 import java.time.LocalDateTime;

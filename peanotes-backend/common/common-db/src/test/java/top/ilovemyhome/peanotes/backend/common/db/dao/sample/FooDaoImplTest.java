@@ -19,8 +19,10 @@ import top.ilovemyhome.peanotes.backend.common.db.utils.TestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -159,7 +161,8 @@ public class FooDaoImplTest {
                     fooDao.create(foo);
                 });
                 List.of("foo", "bar", "baz", "012345678901234567890123456789012345678901234567890123456789").forEach(name -> {
-                    barDao.create(Bar.of(name, "bar...bar..."));
+                    barDao.create(Bar.of(name, "bar...bar...", UUID.randomUUID(), YearMonth.of(2025, 1)
+                        , Map.of("k1", "v1"), Map.of("k1", 100, "k2", 200)));
                 });
             });
         } catch (Throwable t) {
@@ -207,7 +210,11 @@ public class FooDaoImplTest {
                 create table bar (
                   ID NUMERIC(22) primary key default nextval('seq_foo'),
                   NAME varchar(50) not null,
-                  OTHERS text
+                  OTHERS text,
+                  UUID varchar(256),
+                  BILLING_MONTH varchar(10) ,
+                  ATTRIBUTES varchar(512),
+                  INT_ATTRIBUTES varchar(512)
                 );
                 """);
 
@@ -279,7 +286,8 @@ public class FooDaoImplTest {
         .build();
 
     private final List<Bar> barList = List.of(
-        Bar.of("jack fang", "jack is a fool.")
+        Bar.of("jack fang", "jack is a fool.", UUID.randomUUID()
+            , YearMonth.of(2024, 12), Map.of("kkk", "vvv"), Map.of("kkk", 100, "kkk2", 200, "kkk3", 300))
         , Bar.of("gates bill", "gates is a rich guy.")
         , Bar.of("jack ma", "jack ma is a rich guy as well")
     );

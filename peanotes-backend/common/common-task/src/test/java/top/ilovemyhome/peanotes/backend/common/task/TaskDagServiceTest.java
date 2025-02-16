@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.backend.common.db.SimpleDataSourceFactory;
 import top.ilovemyhome.peanotes.backend.common.json.JacksonUtil;
 import top.ilovemyhome.peanotes.backend.common.task.impl.*;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrderDaoJdbiImpl;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrder;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecord;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDaoJdbiImpl;
 import top.ilovemyhome.peanotes.backend.common.task.utils.TestUtils;
 
 import java.time.Duration;
@@ -27,19 +31,20 @@ public class TaskDagServiceTest {
 
     @Test
     public void testTaskOrderAndRunForAsync() {
-        SimpleTaskOrder fooDaily20240718 = SimpleTaskOrder.builder()
+        final String orderKey = "FOO_DAILY_20240718_ASYNC";
+        TaskOrder fooDaily20240718 = TaskOrder.builder()
+            .withId(1L)
             .withName("foo")
             .withOrderType(OrderType.Daily)
-            .withOtherKeys(Map.of("bizDate", "20240718", "runType", "ASYNC"))
-            .withParams(Map.of("type", "fund"))
+            .withKey(orderKey)
+            .withAttributes(Map.of("type", "fund"))
             .build();
-        String orderKey = "FOO_DAILY_20240718_ASYNC";
         taskDagService.deleteOrderByKey(orderKey, true);
         taskDagService.createOrder(fooDaily20240718);
 
         assertThat(fooDaily20240718.getKey()).isEqualTo(orderKey);
-        assertThat(taskDagService.isSuccess(fooDaily20240718)).isFalse();
-        assertThat(taskDagService.isOrdered(fooDaily20240718)).isTrue();
+        assertThat(taskDagService.isSuccess(orderKey)).isFalse();
+        assertThat(taskDagService.isOrdered(fooDaily20240718.getKey())).isTrue();
         List<Long> ids = taskDagService.getNextTaskIds(5);
         //add the tasks
         TaskRecord t1 = createT1(ids.getFirst(), fooDaily20240718, true, "t1Input", Set.of(ids.get(1), ids.get(2)));
@@ -51,8 +56,8 @@ public class TaskDagServiceTest {
         List<TaskRecord> taskList = taskDagService.findTaskByOrderKey(orderKey);
         assertThat(taskList.size()).isEqualTo(5);
 
-        assertThat(taskDagService.isSuccess(fooDaily20240718)).isFalse();
-        assertThat(taskDagService.isOrdered(fooDaily20240718)).isTrue();
+        assertThat(taskDagService.isSuccess(orderKey)).isFalse();
+        assertThat(taskDagService.isOrdered(fooDaily20240718.getKey())).isTrue();
         Map<String, TaskRecord> nameMap = queryAndReturnMap(orderKey);
 
         taskList.forEach(t -> {
@@ -71,36 +76,36 @@ public class TaskDagServiceTest {
         t5 = nameMap.get("t5");
 
         assertThat(t1.getSuccessorIds()).isEqualTo(Set.of(ids.get(1), ids.get(2)));
-        assertThat(JacksonUtil.fromJson(t1.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t1.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t1.getId());
         assertThat(t1.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution");
         assertThat(t1.getTimeout()).isEqualTo(1L);
         assertThat(t1.getTimeoutUnit()).isEqualTo(TimeUnit.HOURS);
 
         assertThat(t2.getSuccessorIds()).isNull();
-        assertThat(JacksonUtil.fromJson(t2.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t2.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t2.getId());
         assertThat(t2.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution");
         assertThat(t2.getTimeout()).isEqualTo(1L);
         assertThat(t2.getTimeoutUnit()).isEqualTo(TimeUnit.MINUTES);
 
         assertThat(t3.getSuccessorIds()).isEqualTo(Set.of(ids.get(3), ids.get(4)));
-        assertThat(JacksonUtil.fromJson(t3.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t3.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t3.getId());
         assertThat(t3.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.ConditionExceptionalExecution");
         assertThat(t3.getTimeout()).isEqualTo(10L);
         assertThat(t3.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
         assertThat(t4.getSuccessorIds()).isEqualTo(Set.of(ids.get(4)));
-        assertThat(JacksonUtil.fromJson(t4.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t4.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t4.getId());
         assertThat(t4.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.LongRunningExecution");
         assertThat(t4.getTimeout()).isEqualTo(2L);
         assertThat(t4.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
         assertThat(t5.getSuccessorIds()).isNull();
-        assertThat(JacksonUtil.fromJson(t5.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t5.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t5.getId());
         assertThat(t5.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution");
         assertThat(t5.getTimeout()).isEqualTo(10L);
         assertThat(t5.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
-        taskDagService.loadAndStart(fooDaily20240718);
+        taskDagService.loadAndStart(orderKey);
         ThreadUtils.sleepQuietly(Duration.ofSeconds(1));
         taskDagService.receiveTaskEvent(t1.getId(), TaskStatus.SUCCESS, StringTaskOutput.success("T1 success"));
         nameMap = queryAndReturnMap(orderKey);
@@ -146,19 +151,19 @@ public class TaskDagServiceTest {
         taskDagService.receiveTaskEvent(t5.getId(), TaskStatus.SUCCESS, StringTaskOutput.success("T5 success"));
         nameMap = queryAndReturnMap(orderKey);
         assertThat(nameMap.get("t5").getStatus()).isEqualTo(TaskStatus.SUCCESS);
-        assertThat(taskDagService.isSuccess(fooDaily20240718)).isTrue();
+        assertThat(taskDagService.isSuccess(orderKey)).isTrue();
     }
 
 
     @Test
     public void testTaskOrderAndRunForSync() {
-        SimpleTaskOrder fooDaily20240718 = SimpleTaskOrder.builder()
-            .withName("foo")
-            .withOrderType(OrderType.Daily)
-            .withOtherKeys(Map.of("bizDate", "20240718", "runType", "SYNC"))
-            .withParams(Map.of("type", "fund"))
-            .build();
         String orderKey = "FOO_DAILY_20240718_SYNC";
+        TaskOrder fooDaily20240718 = TaskOrder.builder()
+            .withName("foo")
+            .withKey(orderKey)
+            .withOrderType(OrderType.Daily)
+            .withAttributes(Map.of("type", "fund"))
+            .build();
         taskDagService.deleteOrderByKey(orderKey, true);
         taskDagService.createOrder(fooDaily20240718);
 
@@ -171,11 +176,11 @@ public class TaskDagServiceTest {
         taskDagService.createTasks(List.of(t1, t2, t3, t4, t5));
 
         assertThat(fooDaily20240718.getKey()).isEqualTo(orderKey);
-        assertThat(taskDagService.isSuccess(fooDaily20240718)).isFalse();
-        assertThat(taskDagService.isOrdered(fooDaily20240718)).isTrue();
+        assertThat(taskDagService.isSuccess(orderKey)).isFalse();
+        assertThat(taskDagService.isOrdered(fooDaily20240718.getKey())).isTrue();
         Map<String, TaskRecord> nameMap;
         List<TaskRecord> taskList = taskDagService.findTaskByOrderKey(orderKey);
-        assertThat(taskDagService.isSuccess(fooDaily20240718)).isFalse();
+        assertThat(taskDagService.isSuccess(orderKey)).isFalse();
         assertThat(taskList.size()).isEqualTo(5);
         nameMap = queryAndReturnMap(orderKey);
         taskList.forEach(t -> {
@@ -196,36 +201,36 @@ public class TaskDagServiceTest {
         t5 = nameMap.get("t5");
 
         assertThat(t1.getSuccessorIds()).isEqualTo(Set.of(ids.get(1), ids.get(2)));
-        assertThat(JacksonUtil.fromJson(t1.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t1.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t1.getId());
         assertThat(t1.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution");
         assertThat(t1.getTimeout()).isEqualTo(1L);
         assertThat(t1.getTimeoutUnit()).isEqualTo(TimeUnit.HOURS);
 
         assertThat(t2.getSuccessorIds()).isNull();
-        assertThat(JacksonUtil.fromJson(t2.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t2.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t2.getId());
         assertThat(t2.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution");
         assertThat(t2.getTimeout()).isEqualTo(1L);
         assertThat(t2.getTimeoutUnit()).isEqualTo(TimeUnit.MINUTES);
 
         assertThat(t3.getSuccessorIds()).isEqualTo(Set.of(ids.get(3), ids.get(4)));
-        assertThat(JacksonUtil.fromJson(t3.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t3.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t3.getId());
         assertThat(t3.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.ConditionExceptionalExecution");
         assertThat(t3.getTimeout()).isEqualTo(10L);
         assertThat(t3.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
         assertThat(t4.getSuccessorIds()).isEqualTo(Set.of(ids.get(4)));
-        assertThat(JacksonUtil.fromJson(t4.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t4.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t4.getId());
         assertThat(t4.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.LongRunningExecution");
         assertThat(t4.getTimeout()).isEqualTo(10L);
         assertThat(t4.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
         assertThat(t5.getSuccessorIds()).isNull();
-        assertThat(JacksonUtil.fromJson(t5.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t5.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t5.getId());
         assertThat(t5.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution");
         assertThat(t5.getTimeout()).isEqualTo(10L);
         assertThat(t5.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
-        taskDagService.loadAndStart(fooDaily20240718);
+        taskDagService.loadAndStart(orderKey);
         ThreadUtils.sleepQuietly(Duration.ofSeconds(1));
         nameMap = queryAndReturnMap(orderKey);
         assertThat(nameMap.get("t1").getStatus()).isEqualTo(TaskStatus.SUCCESS);
@@ -248,13 +253,13 @@ public class TaskDagServiceTest {
 
     @Test
     public void testTaskOrderAndRunForSyncTimeout() {
-        SimpleTaskOrder fooDaily20240718 = SimpleTaskOrder.builder()
+        String orderKey = "FOO_DAILY_20240718_TIMEOUT_SYNC";
+        TaskOrder fooDaily20240718 = TaskOrder.builder()
             .withName("foo")
             .withOrderType(OrderType.Daily)
-            .withOtherKeys(Map.of("bizDate", "20240718", "runType", "SYNC", "error", "TIMEOUT"))
-            .withParams(Map.of("type", "fund"))
+            .withKey(orderKey)
+            .withAttributes(Map.of("bizDate", "20240718", "runType", "SYNC", "error", "TIMEOUT"))
             .build();
-        String orderKey = "FOO_DAILY_20240718_TIMEOUT_SYNC";
         taskDagService.deleteOrderByKey(orderKey, true);
         taskDagService.createOrder(fooDaily20240718);
 
@@ -271,12 +276,12 @@ public class TaskDagServiceTest {
         t4 = nameMap.get("t4");
 
         assertThat(t4.getSuccessorIds()).isEqualTo(Set.of(ids.get(4)));
-        assertThat(JacksonUtil.fromJson(t4.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t4.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t4.getId());
         assertThat(t4.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.LongRunningExecution");
         assertThat(t4.getTimeout()).isEqualTo(1L);
         assertThat(t4.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
-        taskDagService.loadAndStart(fooDaily20240718);
+        taskDagService.loadAndStart(orderKey);
         ThreadUtils.sleepQuietly(Duration.ofSeconds(2));
         nameMap = queryAndReturnMap(orderKey);
         assertThat(nameMap.get("t1").getStatus()).isEqualTo(TaskStatus.SUCCESS);
@@ -288,13 +293,13 @@ public class TaskDagServiceTest {
 
     @Test
     public void testTaskOrderAndRunForSyncException() {
-        SimpleTaskOrder fooDaily20240718 = SimpleTaskOrder.builder()
+        String orderKey = "FOO_DAILY_20240718_ERROR_SYNC";
+        TaskOrder fooDaily20240718 = TaskOrder.builder()
             .withName("foo")
             .withOrderType(OrderType.Daily)
-            .withOtherKeys(Map.of("bizDate", "20240718", "runType", "SYNC", "error", "ERROR"))
-            .withParams(Map.of("type", "fund"))
+            .withKey(orderKey)
+            .withAttributes(Map.of("bizDate", "20240718", "runType", "SYNC", "error", "ERROR"))
             .build();
-        String orderKey = "FOO_DAILY_20240718_ERROR_SYNC";
         taskDagService.deleteOrderByKey(orderKey, true);
         taskDagService.createOrder(fooDaily20240718);
 
@@ -311,12 +316,12 @@ public class TaskDagServiceTest {
         t3 = nameMap.get("t3");
 
         assertThat(t3.getSuccessorIds()).isEqualTo(Set.of(ids.get(3), ids.get(4)));
-        assertThat(JacksonUtil.fromJson(t3.getInput(), StringTaskInput.class).getTaskOrder()).isEqualTo(fooDaily20240718);
+        assertThat(JacksonUtil.fromJson(t3.getInput(), StringTaskInput.class).getTaskId()).isEqualTo(t3.getId());
         assertThat(t3.getExecutionKey()).isEqualTo("top.ilovemyhome.peanotes.backend.common.task.impl.execution.ConditionExceptionalExecution");
         assertThat(t3.getTimeout()).isEqualTo(10L);
         assertThat(t4.getTimeoutUnit()).isEqualTo(TimeUnit.SECONDS);
 
-        taskDagService.loadAndStart(fooDaily20240718);
+        taskDagService.loadAndStart(orderKey);
         ThreadUtils.sleepQuietly(Duration.ofSeconds(1));
         nameMap = queryAndReturnMap(orderKey);
         assertThat(nameMap.get("t1").getStatus()).isEqualTo(TaskStatus.SUCCESS);
@@ -328,13 +333,13 @@ public class TaskDagServiceTest {
         assertThat(nameMap.get("t5").getStatus()).isEqualTo(TaskStatus.INIT);
     }
 
-    private TaskRecord createT1(Long id, SimpleTaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
+    private TaskRecord createT1(Long id, TaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
         return TaskRecord.builder()
             .withId(id)
             .withOrderKey(taskOrder.getKey())
             .withName("t1")
             .withAsync(async)
-            .withInput(JacksonUtil.toJson(new StringTaskInput(taskOrder, input, Map.of("p1", "v1", "p2", "v2"))))
+            .withInput(JacksonUtil.toJson(new StringTaskInput(id, input, Map.of("p1", "v1", "p2", "v2"))))
             .withDescription("T1 print log task")
             .withExecutionKey("top.ilovemyhome.peanotes.backend.common.task.impl.execution.PrintInputTaskExecution")
             .withSuccessorIds(successorIds)
@@ -344,14 +349,14 @@ public class TaskDagServiceTest {
             .build();
     }
 
-    private TaskRecord createT2(Long id, SimpleTaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
+    private TaskRecord createT2(Long id, TaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
         return TaskRecord.builder()
             .withId(id)
             .withOrderKey(taskOrder.getKey())
             .withName("t2")
             .withDescription("T2 print log task")
             .withAsync(async)
-            .withInput(JacksonUtil.toJson(new StringTaskInput(taskOrder, input, Map.of("p1", "v1", "p2", "v2"))))
+            .withInput(JacksonUtil.toJson(new StringTaskInput(id, input, Map.of("p1", "v1", "p2", "v2"))))
             .withStatus(TaskStatus.INIT)
             .withTimeoutUnit(TimeUnit.MINUTES)
             .withSuccessorIds(successorIds)
@@ -360,14 +365,14 @@ public class TaskDagServiceTest {
             .build();
     }
 
-    private TaskRecord createT3(Long id, SimpleTaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
+    private TaskRecord createT3(Long id, TaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
         return TaskRecord.builder()
             .withId(id)
             .withOrderKey(taskOrder.getKey())
             .withName("t3")
             .withDescription("T3 conditional exception task")
             .withAsync(async)
-            .withInput(JacksonUtil.toJson(new StringTaskInput(taskOrder, input, Map.of("p1", "v1", "p2", "v2"))))
+            .withInput(JacksonUtil.toJson(new StringTaskInput(id, input, Map.of("p1", "v1", "p2", "v2"))))
             .withStatus(TaskStatus.INIT)
             .withTimeoutUnit(TimeUnit.SECONDS)
             .withTimeout(10L)
@@ -376,14 +381,14 @@ public class TaskDagServiceTest {
             .build();
     }
 
-    private TaskRecord createT4(Long id, SimpleTaskOrder taskOrder, boolean async, String input, Set<Long> successorIds, Long timeout) {
+    private TaskRecord createT4(Long id, TaskOrder taskOrder, boolean async, String input, Set<Long> successorIds, Long timeout) {
         return TaskRecord.builder()
             .withId(id)
             .withOrderKey(taskOrder.getKey())
             .withName("t4")
             .withAsync(async)
             .withDescription("T4 long running task")
-            .withInput(JacksonUtil.toJson(new StringTaskInput(taskOrder, input, Map.of("p1", "v1", "p2", "v2"))))
+            .withInput(JacksonUtil.toJson(new StringTaskInput(id, input, Map.of("p1", "v1", "p2", "v2"))))
             .withStatus(TaskStatus.INIT)
             .withTimeout(timeout)
             .withTimeoutUnit(TimeUnit.SECONDS)
@@ -392,14 +397,14 @@ public class TaskDagServiceTest {
             .build();
     }
 
-    private TaskRecord createT5(Long id, SimpleTaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
+    private TaskRecord createT5(Long id, TaskOrder taskOrder, boolean async, String input, Set<Long> successorIds) {
         return TaskRecord.builder()
             .withId(id)
             .withOrderKey(taskOrder.getKey())
             .withName("t5")
             .withAsync(async)
             .withDescription("T5 print log task")
-            .withInput(JacksonUtil.toJson(new StringTaskInput(taskOrder, input, Map.of("p1", "v1", "p2", "v2"))))
+            .withInput(JacksonUtil.toJson(new StringTaskInput(id, input, Map.of("p1", "v1", "p2", "v2"))))
             .withStatus(TaskStatus.INIT)
             .withTimeoutUnit(TimeUnit.SECONDS)
             .withTimeout(10L)
@@ -418,7 +423,7 @@ public class TaskDagServiceTest {
         dataSourceFactory = TestUtils.getDataSourceFactory();
         taskContext = FooTaskContext.getInstance(dataSourceFactory.getJdbi());
         new TaskRecordDaoJdbiImpl(taskContext);
-        new SimpleTaskOrderDaoJdbiImpl(taskContext);
+        new TaskOrderDaoJdbiImpl(taskContext);
         new FooTaskFactoryImpl(taskContext);
         taskDagService = new TaskDagServiceImpl(taskContext);
     }

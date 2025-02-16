@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有向无环图 (DAG) 展示</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .node rect {
+            stroke: #999;
+            fill: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .edgePath path {
+            stroke: #333;
+            stroke-width: 1.5px;
+            fill: none;
+        }
+
+        .edgeLabel rect {
+            fill: #fff;
+        }
+
+        .node text {
+            font: 10px sans-serif;
+        }
+
+        .edgeLabel text {
+            font: 10px sans-serif;
+        }
+    </style>
+</head>
+<body>
+<svg width="960" height="900">
+    <g></g>
+</svg>
+<script>
+    $(document).ready(function () {
+        // 从后端获取DAG数据
+        /*
+        $.ajax({
+            url: 'https://example.com/get-dag-data', // 替换为实际的后端URL
+            method: 'GET',
+            success: function (data) {
+                renderDAG(data);
+            },
+            error: function (error) {
+                console.log('Error fetching DAG data:', error);
+            }
+        });
+
+         */
+        //status
+        // 0, INIT
+        // 1. RUNNING
+        // 2. SUCCESS
+        // 3. ERROR
+        const data = {
+            "nodes": [
+                {"id": "A", "label": "Load Fee and Rebate data", "status": 2},
+                {"id": "B", "label": "Calculation Static data", "status": 3},
+                {"id": "C", "label": "Generate billing statement", "status": 2},
+                {"id": "D", "label": "Generate billing statement report", "status": 1},
+                {"id": "E", "label": "Distribution report", "status": 0},
+                {"id": "F", "label": "FX Rate loading", "status": 0},
+                {"id": "G", "label": "Static Data loading", "status": 0},
+            ],
+            "edges": [
+                {"source": "A", "target": "B"},
+                {"source": "A", "target": "C"},
+                {"source": "B", "target": "D"},
+                {"source": "C", "target": "D"},
+                {"source": "D", "target": "E"}
+            ]
+        }
+        renderDAG(data);
+
+        function selectStyle(node) {
+            let style = "fill:#faf;stroke:#faf";
+            switch (node.status) {
+                case 0 :
+                    style = "fill:#FFFFFF;stroke:#C0C0C0";
+                    break;
+                case 1:
+                    style = "fill:#FF0;stroke:#C0C0C0";
+                    break;
+                case 2:
+                    style = "fill:#0F0;stroke:#C0C0C0";
+                    break;
+                case 3:
+                    style = "fill:#F00;stroke:#C0C0C0";
+                    break;
+                default:
+                    break;
+            }
+            return style;
+        }
+
+        function renderDAG(data) {
+            // 创建一个新的图
+            const g = new dagreD3
+                .graphlib
+                .Graph()
+                .setGraph({
+                    rankDir: 'LR'
+                });
+
+            // 定义图的节点
+            data.nodes.forEach(node => g.setNode(
+                node.id, {
+                    label: node.label,
+                    shape: "rect",
+                    style: selectStyle(node),
+                    labelStyle: "fill:#454545;font-weight:bold"
+                }));
+
+            // 定义图的连接
+            data.edges.forEach(edge => g.setEdge(edge.source, edge.target, {
+                label: edge.label,
+                style: "fill:#fff;stroke:#afa;stroke-width:2px",
+                arrowhead:"vee",
+                arrowheadStyle:"fill:#f66"
+
+            }));
+
+            // 创建一个新的渲染器
+            const render = new dagreD3.render();
+
+            // 选择SVG元素并设置其宽高
+            const svg = d3.select("svg"), inner = svg.select("g");
+
+            // 设置缩放行为
+            const zoom = d3.zoom().on("zoom", function (event) {
+                inner.attr("transform", event.transform);
+            });
+            svg.call(zoom);
+
+            // 渲染图
+            render(inner, g);
+
+            // 根据图的边界调整SVG的宽高
+            const initialScale = 0.75;
+            svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+            svg.attr('height', g.graph().height * initialScale + 40);
+
+        }
+    });
+</script>
+</body>
+</html>

@@ -6,9 +6,11 @@ import org.slf4j.LoggerFactory;
 import top.ilovemyhome.peanotes.backend.common.db.FlyWayHelper;
 import top.ilovemyhome.peanotes.backend.common.db.SimpleDataSourceFactory;
 import top.ilovemyhome.peanotes.backend.common.task.*;
-import top.ilovemyhome.peanotes.backend.common.task.impl.SimpleTaskOrderDaoJdbiImpl;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrderDaoJdbiImpl;
 import top.ilovemyhome.peanotes.backend.common.task.impl.TaskDagServiceImpl;
-import top.ilovemyhome.peanotes.backend.common.task.impl.TaskRecordDaoJdbiImpl;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDaoJdbiImpl;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrderDao;
+import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDao;
 import top.ilovemyhome.peanotes.backend.dao.operation.OperationLogDaoImpl;
 import top.ilovemyhome.peanotes.backend.dao.system.SystemParamDaoImpl;
 import top.ilovemyhome.peanotes.backend.service.operation.OperationLogCrudService;
@@ -57,8 +59,8 @@ public class AppContext {
         BEAN_FACTORY.put(TaskRecordDao.class, taskRecordDao);
         BEAN_NAME_FACTORY.put("taskRecordDao", taskRecordDao);
 
-        SimpleTaskOrderDaoJdbiImpl taskOrderDao = new SimpleTaskOrderDaoJdbiImpl(taskContext);
-        BEAN_FACTORY.put(SimpleTaskOrderDao.class, taskOrderDao);
+        TaskOrderDaoJdbiImpl taskOrderDao = new TaskOrderDaoJdbiImpl(taskContext);
+        BEAN_FACTORY.put(TaskOrderDao.class, taskOrderDao);
         BEAN_NAME_FACTORY.put("taskOrderDao", taskOrderDao);
         taskContext.setTaskOrderDao(taskOrderDao);
     }

@@ -2,10 +2,7 @@ package top.ilovemyhome.peanotes.backend.common.utils;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
@@ -22,6 +19,7 @@ public final class LocalDateUtils {
     public static final String UNSIGNED_DATETIME_PATTERN = "yyyyMMddHHmmss";
     public static final String UNSIGNED_TIMESTAMP_PATTERN = "yyyyMMddHHmmssSSS";
     public static final String UNSIGNED_DATE_PATTERN = "yyyyMMdd";
+    public static final String YEAR_MONTH_PATTERN = "yyyy-MM";
 
     /**
      * 春天;
@@ -171,6 +169,10 @@ public final class LocalDateUtils {
     public static String format(TemporalAccessor temporal, String pattern) {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern);
         return dateTimeFormatter.format(temporal);
+    }
+
+    public static String formatYearMonth(YearMonth yearMonth) {
+        return DateTimeFormatter.ofPattern(YEAR_MONTH_PATTERN).format(yearMonth);
     }
 
     /**
@@ -482,6 +484,10 @@ public final class LocalDateUtils {
      */
     public static String getEndTimeOfDayStr(LocalDateTime localDateTime, String pattern) {
         return format(localDateTime.withHour(23).withMinute(59).withSecond(59), pattern);
+    }
+
+    public static YearMonth toYearMonth(String yearMonthStr){
+        return YearMonth.parse(yearMonthStr, DateTimeFormatter.ofPattern("yyyy-MM"));
     }
 
     /**

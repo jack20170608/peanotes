@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有向无环图 (DAG) 展示</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
+    <style>
+        .node rect {
+            stroke: #999;
+            fill: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .edgePath path {
+            stroke: #333;
+            stroke-width: 1.5px;
+            fill: none;
+        }
+
+        .edgeLabel rect {
+            fill: #fff;
+        }
+
+        .node text {
+            font: 10px sans-serif;
+        }
+
+        .edgeLabel text {
+            font: 10px sans-serif;
+        }
+    </style>
+</head>
+<body>
+<svg width="960" height="600">
+    <g></g>
+</svg>
+<script>
+    // 创建一个新的图
+    const g = new dagreD3.graphlib.Graph().setGraph({});
+
+    // 定义图的节点
+    g.setNode("A", { label: "A", width: 50, height: 50 });
+    g.setNode("B", { label: "B", width: 50, height: 50 });
+    g.setNode("C", { label: "C", width: 50, height: 50 });
+    g.setNode("D", { label: "D", width: 50, height: 50 });
+    g.setNode("E", { label: "E", width: 50, height: 50 });
+
+    // 定义图的连接
+    g.setEdge("A", "B", { label: "" });
+    g.setEdge("A", "C", { label: "" });
+    g.setEdge("B", "D", { label: "" });
+    g.setEdge("C", "D", { label: "" });
+    g.setEdge("D", "E", { label: "" });
+
+    // 创建一个新的渲染器
+    const render = new dagreD3.render();
+
+    // 选择SVG元素并设置其宽高
+    const svg = d3.select("svg"),
+        inner = svg.select("g");
+
+    // 设置缩放行为
+    const zoom = d3.zoom().on("zoom", function(event) {
+        inner.attr("transform", event.transform);
+    });
+    svg.call(zoom);
+
+    // 渲染图
+    render(inner, g);
+
+    // 根据图的边界调整SVG的宽高
+    const initialScale = 0.75;
+    svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+    svg.attr('height', g.graph().height * initialScale + 40);
+</script>
+</body>
+</html>

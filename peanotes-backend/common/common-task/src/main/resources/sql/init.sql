@@ -10,9 +10,8 @@ create table t_task_order
   id        NUMERIC(18, 0) primary key default nextval('seq_t_task_order_id'),
   name      VARCHAR(64) NOT NULL,
   order_type VARCHAR(32) NOT NULL,
-  key       VARCHAR(512) NOT NULL,
-  other_keys VARCHAR(256) ,
-  params    VARCHAR(512),
+  key       VARCHAR(512) NOT NULL unique ,
+  attributes    VARCHAR(1024),
   create_dt timestamp,
   last_update_dt timestamp
 );

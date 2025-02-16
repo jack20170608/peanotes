@@ -1,4 +1,4 @@
-package top.ilovemyhome.peanotes.backend.common.task;
+package top.ilovemyhome.peanotes.backend.common.task.persistent;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import top.ilovemyhome.peanotes.backend.common.Constants;
+import top.ilovemyhome.peanotes.backend.common.task.TaskStatus;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -21,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 //persist object
-@JsonDeserialize(builder = TaskRecord.Builder.class)
 public final class TaskRecord {
 
     private Long id;
@@ -35,22 +35,13 @@ public final class TaskRecord {
     private boolean async;
     private boolean dummy;
 
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime createDt;
 
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime lastUpdateDt;
 
     private TaskStatus status;
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime startDt;
 
-
-    @JsonSerialize(using = LocalDateTimeSerializer.class)
-    @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
     private LocalDateTime endDt;
 
     private boolean success;
@@ -64,7 +55,7 @@ public final class TaskRecord {
         name("NAME"),
         description("DESCRIPTION"),
         executionKey("EXECUTION_KEY"),
-        successorIdStr("SUCCESSOR_IDS"),
+        successorIds("SUCCESSOR_IDS"),
         input("INPUT"),
         output("OUTPUT"),
         async("ASYNC"),
@@ -187,20 +178,10 @@ public final class TaskRecord {
         return timeoutUnit;
     }
 
-    @JsonIgnore
-    public String getSuccessorIdStr() {
-        if (successorIds == null || successorIds.isEmpty()) {
-            return null;
-        }
-        return successorIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-    }
-
     public static Builder builder() {
         return new Builder();
     }
 
-    @JsonPOJOBuilder()
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
         private Long timeout;
         private TimeUnit timeoutUnit;
@@ -245,15 +226,11 @@ public final class TaskRecord {
             return this;
         }
 
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withEndDt(LocalDateTime endDt) {
             this.endDt = endDt;
             return this;
         }
 
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withStartDt(LocalDateTime startDt) {
             this.startDt = startDt;
             return this;
@@ -264,15 +241,11 @@ public final class TaskRecord {
             return this;
         }
 
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withLastUpdateDt(LocalDateTime lastUpdateDt) {
             this.lastUpdateDt = lastUpdateDt;
             return this;
         }
 
-        @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-        @JsonFormat(pattern = Constants.JSON_DATETIME_FORMAT)
         public Builder withCreateDt(LocalDateTime createDt) {
             this.createDt = createDt;
             return this;

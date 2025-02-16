@@ -1,25 +1,24 @@
-package top.ilovemyhome.peanotes.backend.common.task.impl;
+package top.ilovemyhome.peanotes.backend.common.task.persistent;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Jdbi;
 import top.ilovemyhome.peanotes.backend.common.db.dao.common.SqlGenerator;
 import top.ilovemyhome.peanotes.backend.common.db.dao.common.TableDescription;
 import top.ilovemyhome.peanotes.backend.common.db.dao.common.impl.BaseDaoJdbiImpl;
 import top.ilovemyhome.peanotes.backend.common.json.JacksonUtil;
 import top.ilovemyhome.peanotes.backend.common.task.*;
-import top.ilovemyhome.peanotes.backend.common.utils.StringConvertUtils;
+import top.ilovemyhome.peanotes.backend.common.task.impl.AsyncTask;
+import top.ilovemyhome.peanotes.backend.common.task.impl.SyncTask;
+import top.ilovemyhome.peanotes.backend.common.task.impl.Task;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static top.ilovemyhome.peanotes.backend.common.utils.LocalDateUtils.toLocalDateTime;
 import static top.ilovemyhome.peanotes.backend.common.utils.StringConvertUtils.toEnum;
-import static top.ilovemyhome.peanotes.backend.common.utils.StringConvertUtils.toStrArray;
 
 public class TaskRecordDaoJdbiImpl extends BaseDaoJdbiImpl<TaskRecord>
     implements TaskRecordDao {
@@ -41,9 +40,8 @@ public class TaskRecordDaoJdbiImpl extends BaseDaoJdbiImpl<TaskRecord>
     @Override
     public void registerRowMappers(Jdbi jdbi) {
         jdbi.registerRowMapper(TaskRecord.class, (rs, ctx) -> {
-            String successorIdStr = rs.getString(TaskRecord.Field.successorIdStr.getDbColumn());
-            Set<Long> successorIds = StringUtils.isNotBlank(successorIdStr)
-                ? Stream.of(toStrArray(successorIdStr)).map(StringConvertUtils::toLong).collect(Collectors.toSet()) : null;
+            String successorIdStr = rs.getString(TaskRecord.Field.successorIds.getDbColumn());
+            Set<Long> successorIds = JacksonUtil.fromJson(successorIdStr, new TypeReference<>() {});
             return TaskRecord.builder()
                 .withId(rs.getLong(TaskRecord.Field.id.getDbColumn()))
                 .withOrderKey(rs.getString(TaskRecord.Field.orderKey.getDbColumn()))
@@ -144,8 +142,9 @@ public class TaskRecordDaoJdbiImpl extends BaseDaoJdbiImpl<TaskRecord>
             update t_task set STATUS = :status , START_DT = :startDt , INPUT = :input
             where ID = :id
             """;
-        return update(sql, Map.of("status", TaskStatus.RUNNING, "startDt"
-            , startDt, "id", id, "input", input.toJson()), null);
+        return update(sql
+            , Map.of("status", TaskStatus.RUNNING, "startDt", startDt, "id", id, "input", input)
+            , null);
     }
 
     @Override
