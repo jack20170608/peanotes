@@ -12,6 +12,8 @@ import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDaoJdbi
 import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrderDao;
 import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDao;
 import top.ilovemyhome.peanotes.backend.dao.operation.OperationLogDaoImpl;
+import top.ilovemyhome.peanotes.backend.dao.order.OrderDao;
+import top.ilovemyhome.peanotes.backend.dao.order.OrderDaoImpl;
 import top.ilovemyhome.peanotes.backend.dao.system.SystemParamDaoImpl;
 import top.ilovemyhome.peanotes.backend.service.operation.OperationLogCrudService;
 import top.ilovemyhome.peanotes.backend.service.system.SystemParamCrudService;
@@ -63,6 +65,10 @@ public class AppContext {
         BEAN_FACTORY.put(TaskOrderDao.class, taskOrderDao);
         BEAN_NAME_FACTORY.put("taskOrderDao", taskOrderDao);
         taskContext.setTaskOrderDao(taskOrderDao);
+
+        OrderDao orderDao = new OrderDaoImpl(this);
+        BEAN_FACTORY.put(OrderDao.class, orderDao);
+        BEAN_NAME_FACTORY.put("orderDao", orderDao);
     }
 
     private void initService() {

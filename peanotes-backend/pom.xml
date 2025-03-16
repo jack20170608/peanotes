@@ -100,7 +100,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
+            <!-- the duckdb -->
+            <dependency>
+                <groupId>org.duckdb</groupId>
+                <artifactId>duckdb_jdbc</artifactId>
+                <version>1.2.1</version>
+            </dependency>
             <dependency>
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>

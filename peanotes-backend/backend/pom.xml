@@ -74,7 +74,11 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
         </dependency>
-
+        <!-- the duckdb -->
+        <dependency>
+            <groupId>org.duckdb</groupId>
+            <artifactId>duckdb_jdbc</artifactId>
+        </dependency>
         <!-- the test scope -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

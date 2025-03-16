@@ -15,6 +15,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.ilovemyhome.peanotes.backend.common.json.JacksonUtil;
+import top.ilovemyhome.peanotes.backend.web.handlers.DuckdbPocHandler;
 import top.ilovemyhome.peanotes.backend.web.handlers.HealthHandler;
 import top.ilovemyhome.peanotes.backend.web.handlers.OperationHandler;
 import top.ilovemyhome.peanotes.backend.web.handlers.system.SystemHandler;
@@ -38,27 +40,29 @@ public class WebServerBootstrap {
 
     public static void start(AppContext appContext) {
         MuServer targetServer = startMuServer(appContext);
-        CrankerConnector connector = startCrankerConnector(appContext, targetServer);
 
-        AtomicInteger exceptionCounter = new AtomicInteger(0);
-        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleAtFixedRate(() -> {
-            for (RouterRegistration router : connector.routers()) {
-                LOGGER.info("Router expects {} and is {}, errorCount={}", router.expectedWindowSize(), router.idleSocketSize(), exceptionCounter.get());
-            }
-        }, 0, 1, TimeUnit.MINUTES);
+        if (appContext.getConfig().getBoolean("cranker-gateway.enabled")) {
+            CrankerConnector connector = startCrankerConnector(appContext, targetServer);
+            AtomicInteger exceptionCounter = new AtomicInteger(0);
+            ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.scheduleAtFixedRate(() -> {
+                for (RouterRegistration router : connector.routers()) {
+                    LOGGER.info("Router expects {} and is {}, errorCount={}", router.expectedWindowSize(), router.idleSocketSize(), exceptionCounter.get());
+                }
+            }, 0, 1, TimeUnit.MINUTES);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("Shutting down....");
-            executorService.shutdown();
-            try {
-                connector.stop(9, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                LOGGER.info("Error stopping connector", e);
-            }
-            targetServer.stop();
-            LOGGER.info("Shutdown complete");
-        }));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                LOGGER.info("Shutting down....");
+                executorService.shutdown();
+                try {
+                    connector.stop(9, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOGGER.info("Error stopping connector", e);
+                }
+                targetServer.stop();
+                LOGGER.info("Shutdown complete");
+            }));
+        }
     }
 
     private static CrankerConnector startCrankerConnector(AppContext appContext, MuServer targetServer) {
@@ -125,11 +129,12 @@ public class WebServerBootstrap {
         OperationHandler operationHandler = new OperationHandler(appContext);
         SystemHandler systemHandler = new SystemHandler(appContext);
         TaskHandler taskHandler = new TaskHandler(appContext);
+        DuckdbPocHandler duckdbPocHandler = new DuckdbPocHandler(appContext);
 
         return RestHandlerBuilder
-            .restHandler(operationHandler, systemHandler, taskHandler)
-            .addCustomReader(new JacksonJsonProvider())
-            .addCustomWriter(new JacksonJsonProvider())
+            .restHandler(operationHandler, systemHandler, taskHandler, duckdbPocHandler)
+            .addCustomReader(new JacksonJsonProvider(JacksonUtil.MAPPER))
+            .addCustomWriter(new JacksonJsonProvider(JacksonUtil.MAPPER))
             .withCollectionParameterStrategy(CollectionParameterStrategy.NO_TRANSFORM)
             .withOpenApiHtmlUrl("/api.html")
             .withOpenApiJsonUrl("/openapi.json")

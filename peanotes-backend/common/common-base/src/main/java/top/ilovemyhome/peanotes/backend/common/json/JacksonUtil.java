@@ -70,6 +70,7 @@ public final class JacksonUtil {
             new LocalDateDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         javaTimeModule.addDeserializer(LocalDateTime.class,
             new LocalDateTimeDeserializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
+
         javaTimeModule.addDeserializer(YearMonth.class,
             new YearMonthDeserializer(DateTimeFormatter.ofPattern("yyyy-MM")));
         javaTimeModule.addSerializer(LocalDate.class,

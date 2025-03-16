@@ -21,6 +21,7 @@ public class StartTestServer {
     public static MuServer start() {
         MuServer muServer = muServer()
             .withHttpsPort(0)
+            .withHttpPort(0)
             .addHandler(Method.GET, "/hello", (req, res, map) -> {
                 req.headers().entries().forEach(entry -> {
                     res.headers().add(entry.getKey(), entry.getValue());
@@ -44,10 +45,12 @@ public class StartTestServer {
             .addHandler(RestHandlerBuilder.restHandler(new OrderHandler())
                 .addCustomReader(new JacksonJsonProvider())
                 .addCustomWriter(new JacksonJsonProvider())
+                .withOpenApiJsonUrl("api.json")
+                .withOpenApiHtmlUrl("api.html")
             )
             .start();
         int port = muServer.address().getPort();
-        LOGGER.info("Started at {}", muServer.httpsUri());
+        LOGGER.info("Started at https={}, http={}", muServer.httpsUri(), muServer.httpUri());
         return muServer;
     }
 

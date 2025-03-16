@@ -8,7 +8,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.jakarta.rs.json.JacksonJsonProvider;
-import com.hsbc.cranker.connector.*;
 import com.typesafe.config.Config;
 import io.muserver.*;
 import io.muserver.handlers.ResourceHandlerBuilder;
@@ -27,14 +26,9 @@ import top.ilovemyhome.peanotes.backend.web.LoginHandler;
 import top.ilovemyhome.peanotes.backend.web.security.SecurityHandler;
 
 import java.net.URI;
-import java.net.http.HttpRequest;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.muserver.ContextHandlerBuilder.context;
 import static io.muserver.openapi.ExternalDocumentationObjectBuilder.externalDocumentationObject;
@@ -81,15 +75,17 @@ public class WebServerBootstrap {
 
     private static JacksonJsonProvider createJacksonJsonProvider() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
 
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
         // formatter
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        DateTimeFormatter dateTimeFormatter =  DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter dateTimeFormatter =  DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
         // deserializers
-//        builder.deserializers(new LocalDateDeserializer(dateFormatter));
+//        javaTimeModule.deserializers(new LocalDateDeserializer(dateFormatter));
 //        builder.deserializers(new LocalDateTimeDeserializer(dateTimeFormatter));
+
+        objectMapper.registerModule(new JavaTimeModule());
 
         objectMapper.configure(SerializationFeature.WRITE_DATE_KEYS_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.INDENT_OUTPUT, false);

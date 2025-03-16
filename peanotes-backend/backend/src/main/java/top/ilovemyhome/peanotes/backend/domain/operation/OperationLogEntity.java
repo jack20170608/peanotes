@@ -40,7 +40,12 @@ public class OperationLogEntity {
 
     //todo by jack, use annotation to keep these infos
     public enum Field {
-        id("ID", true), userId("USER_ID"), createDt("CREATE_DT"), uri("URI"), details("DETAILS");
+        id("ID", true),
+        userId("USER_ID"),
+        createDt("CREATE_DT"),
+        uri("URI"),
+        details("DETAILS");
+
         private final String dbColumn;
         private final boolean isId;
 
