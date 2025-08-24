@@ -1,0 +1,71 @@
+@startuml
+'https://plantuml.com/class-diagram'
+
+abstract class Glyph {
+  - Glyph parent;
+  + void draw(Window w);
+  + boolean intersects(Point p);
+  + void insert(Glyph g, int i);
+  + void remove(Glyph g);
+  + Glyph child(int i);
+  + Glyph parent();
+}
+
+Glyph <|-- Character
+
+class Character {
+  - char c;
+  + void draw(Window w);
+  + boolean intersects(Point p);
+}
+
+Glyph <|-- Rectangle
+
+class Rectangle {
+  + void draw(Window w);
+  + boolean intersects(Point p);
+}
+
+
+Glyph <|-- Polygon
+
+class Polygon {
+  + void draw(Window w);
+  + boolean intersects(Point p);
+}
+
+Glyph <|-- Row
+
+class Row {
+  - List<Glyph> children;
+  + void draw(Window w);
+  + boolean intersects(Point p);
+  + void insert(Glyph g, int i);
+  + void remove(Glyph g);
+}
+
+
+Glyph <|-- MonoGlyph
+
+class MonoGlyph {
+- Glyph component;
++ void draw(Window w);
+}
+
+MonoGlyph <|-- Border
+
+class Border {
++ void draw(Window w);
++ void drawBorder(Window w);
+}
+
+MonoGlyph <|-- Scroller
+
+class Scroller {
++ void draw((Window w);
++ void drawScroller((Window w);
+}
+
+
+
+@enduml

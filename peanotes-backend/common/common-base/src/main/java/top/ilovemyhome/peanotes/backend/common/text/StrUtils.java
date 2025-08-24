@@ -1,10 +1,56 @@
 package top.ilovemyhome.peanotes.backend.common.text;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Objects;
+import top.ilovemyhome.peanotes.backend.common.utils.CollectionUtil;
+import java.util.*;
+
 
 public final class StrUtils {
+
+    private static final String[] EMPTY_STRING_ARRAY = {};
+
+    private static final String FOLDER_SEPARATOR = "/";
+
+    public static boolean hasText(CharSequence str) {
+        if (str == null) {
+            return false;
+        }
+
+        int strLen = str.length();
+        if (strLen == 0) {
+            return false;
+        }
+
+        for (int i = 0; i < strLen; i++) {
+            if (!Character.isWhitespace(str.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String[] tokenizeToStringArray(
+        String str, String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {
+        if (str == null) {
+            return EMPTY_STRING_ARRAY;
+        }
+
+        StringTokenizer st = new StringTokenizer(str, delimiters);
+        List<String> tokens = new ArrayList<>();
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            if (trimTokens) {
+                token = token.trim();
+            }
+            if (!ignoreEmptyTokens || !token.isEmpty()) {
+                tokens.add(token);
+            }
+        }
+        return toStringArray(tokens);
+    }
+
+    public static String[] toStringArray(Collection<String> collection) {
+        return (!CollectionUtil.isEmpty(collection) ? collection.toArray(EMPTY_STRING_ARRAY) : EMPTY_STRING_ARRAY);
+    }
 
     public static String collectionToDelimitedString(Collection<?> coll, String delim) {
         return collectionToDelimitedString(coll, delim, "", "");

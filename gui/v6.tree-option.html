@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HostHelper - Tree Folder Select</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* Basic styles for the tree dropdown */
+        .tree-select-container { position: relative; display: inline-block; min-width: 220px; }
+        .tree-select-input {
+            width: 100%; padding: 6px 10px; border: 1px solid #b6c2d2; border-radius: 5px;
+            font-size: 13px; background: #f6f8fa; cursor: pointer;
+        }
+        .tree-dropdown {
+            display: none; position: absolute; top: 110%; left: 0; z-index: 10;
+            background: #fff; border: 1px solid #b6c2d2; border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(9,105,218,0.08); min-width: 220px; max-height: 320px; overflow: auto;
+        }
+        .tree-dropdown ul { list-style: none; margin: 0; padding: 0; }
+        .tree-dropdown li {
+            padding: 4px 10px; cursor: pointer; user-select: none;
+        }
+        .tree-dropdown li:hover, .tree-dropdown .selected {
+            background: #e0e7ff;
+        }
+        .tree-dropdown .folder { font-weight: 500; }
+        .tree-dropdown .children { margin-left: 18px; }
+        .tree-dropdown .toggle {
+            display: inline-block; width: 14px; text-align: center; cursor: pointer; color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+<div id="main-layout">
+    <div class="row">
+        <label for="folderTreeSelect">Folder:</label>
+        <div class="tree-select-container">
+            <input type="text" id="folderTreeSelect" class="tree-select-input" readonly placeholder="Select folder">
+            <div class="tree-dropdown" id="treeDropdown"></div>
+        </div>
+    </div>
+</div>
+<script>
+const folderTreeJson = [
+    {
+        "name": "project",
+        "children": [
+            { "name": "src", "children": [
+                { "name": "main", "children": [
+                    { "name": "java" },
+                    { "name": "resources" }
+                ]},
+                { "name": "test" }
+            ]},
+            { "name": "docs" },
+            { "name": "tests" }
+        ]
+    },
+    {
+        "name": "archive",
+        "children": [
+            { "name": "2023" },
+            { "name": "2024" }
+        ]
+    }
+];
+
+// Helper to build tree HTML
+function buildTree(nodes, path = '') {
+    let html = '<ul>';
+    nodes.forEach(node => {
+        const fullPath = path ? path + '/' + node.name : node.name;
+        const hasChildren = node.children && node.children.length > 0;
+        html += `<li data-path="${fullPath}" class="${hasChildren ? 'folder' : 'file'}">
+            ${hasChildren ? '<span class="toggle">▶</span>' : ''}
+            <span class="node-label">${node.name}</span>
+            ${hasChildren ? '<div class="children" style="display:none;">' + buildTree(node.children, fullPath) + '</div>' : ''}
+        </li>`;
+    });
+    html += '</ul>';
+    return html;
+}
+
+// Render tree dropdown
+function renderTreeDropdown() {
+    document.getElementById('treeDropdown').innerHTML = buildTree(folderTreeJson);
+}
+
+// Dropdown logic
+document.addEventListener('DOMContentLoaded', function() {
+    renderTreeDropdown();
+    const input = document.getElementById('folderTreeSelect');
+    const dropdown = document.getElementById('treeDropdown');
+
+    // Show/hide dropdown
+    input.addEventListener('click', function(e) {
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    });
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.tree-select-container')) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Tree expand/collapse and select
+    dropdown.addEventListener('click', function(e) {
+        const li = e.target.closest('li');
+        if (!li) return;
+        if (e.target.classList.contains('toggle')) {
+            // Toggle children
+            const children = li.querySelector('.children');
+            if (children) {
+                const isOpen = children.style.display === 'block';
+                children.style.display = isOpen ? 'none' : 'block';
+                e.target.textContent = isOpen ? '▶' : '▼';
+            }
+        } else if (e.target.classList.contains('node-label')) {
+            // Select node
+            dropdown.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            li.classList.add('selected');
+            input.value = li.getAttribute('data-path');
+            dropdown.style.display = 'none';
+        }
+    });
+});
+</script>
+</body>
+</html>

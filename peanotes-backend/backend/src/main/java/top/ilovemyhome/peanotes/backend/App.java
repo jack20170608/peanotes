@@ -17,9 +17,9 @@ public class App {
         if (StringUtils.isEmpty(env)){
             env = "local";
         }
-        App app = new App();
-        app.initAppContext(env);
-        app.initWebServer(app.getAppContext());
+        APP = new App();
+        APP.initAppContext(env);
+        APP.initWebServer();
     }
 
     public AppContext getAppContext() {
@@ -41,7 +41,7 @@ public class App {
         this.appContext.init();
     }
 
-    private void initWebServer(AppContext appContext){
+    private void initWebServer(){
         WebServerBootstrap.start(appContext);
     }
 

@@ -1,0 +1,42 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+interface Command{
+  void execute();
+}
+
+Command <|-- PasteCommand
+
+class PasteCommand {
+  - byte[] buffer;
+}
+
+Command <|-- FontCommand
+
+class FontCommand {
+  void execute();
+  - Font newFont;
+}
+
+Command <|-- SaveCommand
+
+class SaveCommand{
+  void execute();
+}
+
+Command <|-- QuitCommand
+
+class QuitCommand {
+  void execute();
+}
+
+
+Glyph  <|-- MenuItem
+
+class MenuItem {
+  - Command command;
+  void clicked();
+}
+
+
+@enduml

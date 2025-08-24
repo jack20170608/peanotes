@@ -32,6 +32,7 @@
             <artifactId>mu-server</artifactId>
         </dependency>
         <!-- the internal dependencies -->
+        <!--
         <dependency>
             <groupId>top.ilovemyhome</groupId>
             <artifactId>common-base</artifactId>
@@ -44,6 +45,7 @@
             <groupId>top.ilovemyhome</groupId>
             <artifactId>common-security</artifactId>
         </dependency>
+        -->
         <!-- the thrid party dependencies -->
         <dependency>
             <groupId>com.typesafe</groupId>

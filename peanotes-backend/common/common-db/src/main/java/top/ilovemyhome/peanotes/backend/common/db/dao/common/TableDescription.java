@@ -14,9 +14,14 @@ public class TableDescription {
     private final TreeMap<String, String> fieldColumnMap;
     private final String idField;
     private final String fromClause;
+    private final Class<?> entityClass;
 
     public String getName() {
         return name;
+    }
+
+    public Class<?> getEntityClass() {
+        return entityClass;
     }
 
     public String getIdField() {
@@ -46,6 +51,7 @@ public class TableDescription {
         private Map<String, String> fieldColumnMap;
         private String idField;
         private String fromClause;
+        private Class entityClass;
 
         private Builder() {
         }
@@ -75,16 +81,22 @@ public class TableDescription {
             return this;
         }
 
+        public Builder withEntityClass(Class<?> entityClass) {
+            this.entityClass = entityClass;
+            return this;
+        }
+
         public TableDescription build() {
-            return new TableDescription(name, idAutoGenerate, fromClause, fieldColumnMap, idField);
+            return new TableDescription(name, entityClass, idAutoGenerate, fromClause, fieldColumnMap, idField);
         }
     }
 
-    private TableDescription(@NotNull String name, boolean idAutoGenerate, String fromClause, @NotNull Map<String, String> fieldColumnMap
+    private TableDescription(@NotNull String name, Class<?> entityClass, boolean idAutoGenerate, String fromClause, @NotNull Map<String, String> fieldColumnMap
         , String idField) {
         this.name = name;
         this.idAutoGenerate = idAutoGenerate;
         this.idField = idField;
+        this.entityClass = entityClass;
         if (StringUtils.hasText(fromClause)) {
             this.fromClause = fromClause;
         } else {

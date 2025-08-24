@@ -36,9 +36,16 @@ public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
         String sql = sqlGenerator.create(table);
         LOGGER.info("Create SQL=[{}].", sql);
         return h -> {
-            Long result = null;
-            Update update = h.createUpdate(sql)
-                .bindBean("t", entity);
+            Long result;
+            boolean isRecord = entity.getClass().isRecord();
+            Update update;
+            if (isRecord) {
+                update = h.createUpdate(sql)
+                    .bindMethods("t", entity);
+            }else {
+                update = h.createUpdate(sql)
+                    .bindBean("t", entity);
+            }
             if (table.isIdAutoGenerate()) {
                 result = update.executeAndReturnGeneratedKeys("id")
                     .mapTo(Long.class)
@@ -246,9 +253,6 @@ public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
         return null;
     }
 
-    private Type getEntityType() {
-        return ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
-    }
 
     private void bindParamsForUpdate(Update update, Map<String, Object> params, Map<String, List> listParam, Map<String, Object> beanParam) {
         if (Objects.nonNull(listParam) && !listParam.isEmpty()) {
@@ -276,6 +280,12 @@ public abstract class BaseDaoJdbiImpl<T> implements BaseDao<T> {
         this.jdbi = jdbi;
         registerRowMappers(this.jdbi);
         this.sqlGenerator = new SqlGenerator();
+    }
+
+    private Type getEntityType() {
+        return Objects.isNull(this.table.getEntityClass())
+            ? ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0]
+            : this.table.getEntityClass();
     }
 
     protected final Map<String, String> sqlCache = new ConcurrentHashMap<>(10);

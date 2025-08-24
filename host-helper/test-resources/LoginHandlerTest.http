@@ -1,0 +1,48 @@
+### 1.0 Login success with jack with admin role
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "username": "jack",
+  "password": "1",
+  "jwtResponseType": "token"
+}
+
+> {%
+  client.test("Request executed successfully", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+
+  client.test("Headers option exists", function() {
+    client.assert(response.body.hasOwnProperty("token"), "Cannot find 'token' option in response");
+  });
+
+  client.test("Response content-type is json", function() {
+    var type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+  });
+
+  client.global.set("admin_auth_token", response.body.token);
+
+%}
+
+### 1.1 Login success with read role
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "username": "read",
+  "password": "1",
+  "jwtResponseType": "token"
+}
+
+> {%
+  client.test("Request executed successfully", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+
+  client.global.set("read_auth_token", response.body.token);
+
+%}
+
+

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Search Tool</title>
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .search-section { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-section > div { display: flex; align-items: center; gap: 6px; }
+        button { padding: 8px 16px; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a9e; }
+        #serverCheckboxes { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 6px; }
+        .server-group { margin: 8px 0; display: inline-block; margin-right: 15px; white-space: nowrap; }
+        .server-group strong { margin-right: 8px; }
+        .result-card { border: 1px solid #ddd; border-radius: 6px; margin-top: 15px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #e0e7ff; font-weight: 600; }
+        tr:hover { background-color: #f5f5f5; }
+        .action-btn { margin-right: 8px; color: #0078d4; text-decoration: none; }
+        .action-btn:hover { text-decoration: underline; }
+        .pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f5f5f5; }
+        .page-btn { padding: 4px 10px; margin: 0 2px; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .tree-select-container { position: relative; display: inline-block; width: 300px; }
+        .tree-select-input { width: 100%; padding: 6px; border: 1px solid #b6c2d2; border-radius: 5px; font-size: 13px; background: #f6f8fa; }
+        .tree-dropdown { position: absolute; top: 100%; left: 0; right: 0; max-height: 300px; overflow-y: auto; border: 1px solid #ddd; background: white; z-index: 100; padding: 5px; display: none; }
+        .folder-suggestions { position: absolute; top: 100%; left: 0; right: 0; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; background: white; z-index: 101; padding: 5px; }
+        .folder-suggestion-item { padding: 4px; cursor: pointer; }
+        .folder-suggestion-item:hover { background: #e0e7ff; }
+        ul { list-style-type: none; padding-left: 15px; margin: 5px 0; }
+        .toggle { cursor: pointer; display: inline-block; width: 14px; text-align: center; }
+        .icon-folder { margin-right: 5px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 80%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-close { cursor: pointer; font-size: 20px; }
+        .modal-body { flex: 1; overflow-y: auto; white-space: pre-wrap; font-family: monospace; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+        .tail-controls { display: flex; gap: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="main-layout">
+        <div class="title">File Search Tool</div>
+        <div class="row"><div id="serverCheckboxes" class="checkbox-group"><div class="server-group"><strong>Servers:</strong></div></div></div>
+        <div class="row">
+            <div style="display:flex;align-items:center;gap:6px;">
+                <label for="folderTreeSelect">Path:</label>
+                <div class="tree-select-container">
+                    <input type="text" id="folderTreeSelect" class="tree-select-input" placeholder="Double click to show list, manually enter or select path...">
+                    <div class="tree-dropdown" id="treeDropdown"></div>
+                    <div id="folderSuggestions" class="folder-suggestions" style="display: none;"></div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+                <label for="fileInput">content:</label>
+                <input type="text" id="fileInput" placeholder="Enter keywords to search in file content..." style="width:250px;flex-grow:1;">
+            </div>
+            <button id="searchBtn" style="background:linear-gradient(90deg,#2563eb 60%,#1d4ed8 100%);">Search</button>
+            <button id="clearBtn" style="background:linear-gradient(90deg,#9ca3af 60%,#6b7280 100%);">Clear</button>
+        </div>
+        <div class="loading" id="loadingIndicator">Searching...</div>
+        <div id="results">
+    </div>
+
+    <!-- 文件查看模态框 -->
+    <div class="modal" id="viewModal">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#e0e7ff;padding:10px 15px;border-bottom:1px solid #ddd;border-radius:6px 6px 0 0;margin:-20px -20px 15px -20px;">
+                <h3>View File Content</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="viewContent" style="font-family:'Consolas','Courier New',monospace;font-size:13px;"></div>
+        </div>
+    </div>
+
+    <!-- Tail模态框 -->
+    <div class="modal" id="tailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>File Tail Content</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="tailContent" style="font-family:'Consolas','Courier New',monospace;font-size:13px;"></div>
+            <div class="tail-controls">
+                <button id="refreshTail">刷新</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置化常量
+        const AppConfig = {
+            serverGroups: [
+                    { name: 'Sit', servers: ['sit100', 'sit101'] },
+                    { name: 'Uat', servers: ['uat110','uat111','uat112','uat113'] },
+                    { name: 'Prod', servers: ['prod200','prod201','prod202','prod203','prod204'] }
+                ],
+            folderTree: [
+                {"name": "project","children": [
+                    {"name": "src","children": [
+                        {"name": "main","children": [{"name": "java"},{"name": "resources",
+                                "children": [{"name": "config",
+                                    "children":[{"name": "app1"}, {"name": "app2"}, {"name": "app3" }]}]}, {"name": "templates"}]}]},
+                    {"name": "test","children": [{"name": "java"},{"name": "resources"}]},
+                ]},
+                {"name": "docs"},
+                {"name": "tests"}
+            ],
+            defaultPageSize: 20,
+            pageSizes: [10, 20, 50, 100, 200, 500],
+            searchDelay: 300, // 防抖动延迟
+            tailLines: 200 // 默认显示末尾行数
+        };
+
+        // 应用状态管理
+        const AppState = {
+            currentPage: 1,
+            pageSize: AppConfig.defaultPageSize,
+            searchResults: [],
+            currentFile: null
+        };
+
+        // 工具函数 - 文件类型检测
+        function getFileType(fileName) {
+            const idx = fileName.lastIndexOf('.');
+            return idx !== -1 ? fileName.substring(idx + 1).toLowerCase() : 'unknown';
+        }
+
+        // 工具函数 - 文件大小格式化
+        function formatFileSize(bytes) {
+            if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+            if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            if (bytes >= 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            return bytes + ' B';
+        }
+
+        // 渲染结果表格
+        function renderResultsPage(page = 1) {
+            AppState.currentPage = page;
+            const totalPages = Math.ceil(AppState.searchResults.length / AppState.pageSize);
+            const start = (page - 1) * AppState.pageSize;
+            const end = Math.min(start + AppState.pageSize, AppState.searchResults.length);
+            const pageResults = AppState.searchResults.slice(start, end);
+
+            let tableRows = pageResults.map((r, idx) => `
+                <tr>
+                    <td>${r.fileName}</td>
+                    <td>${r.fileType}</td>
+                    <td>${r.server}</td>
+                    <td>${formatFileSize(r.size)}</td>
+                    <td>${r.lastModified}</td><td>${r.createTime}</td>
+                    <td>
+                        <a href="#" class="action-btn action-view" data-idx="${start + idx}">View</a>
+                        <a href="#" class="action-btn action-download" data-idx="${start + idx}">Download</a>
+                        <a href="#" class="action-btn action-tail" data-idx="${start + idx}">Tail</a>
+                    </td>
+                </tr>`).join('');
+
+            // 分页控件
+            const paginationBar = `
+                <div class="pagination-bar"><span id="page-info" style="margin-right:15px;"></span>
+                    <span style="margin-right:12px;font-weight:300;">Rows per page</span>
+                    <select id="pageSizeSelect" style="width:70px;">
+                        ${AppConfig.pageSizes.map(size => `<option value="${size}" ${size === AppState.pageSize ? 'selected' : ''}>${size}</option>`).join('')}
+                    </select>
+                    <span style="margin:0 10px;">
+                        ${AppState.searchResults.length === 0 ? '0-0' : (start+1) + '-' + end}/${AppState.searchResults.length}
+                    </span>
+                    <button class="page-btn" data-page="${page-1}" ${page <= 1 ? 'disabled' : ''}>&lt;</button>
+                    <button class="page-btn" data-page="${page+1}" ${page >= totalPages ? 'disabled' : ''}>&gt;</button>
+                </div>`;
+
+            $('#results').html(`
+                <div class="result-card" style="padding:0;">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#e0e7ff;">
+                                <th style="padding:8px 6px; text-align:left;">File Name</th>
+                                <th style="padding:8px 6px; text-align:left;">File Type</th>
+                                <th style="padding:8px 6px; text-align:left;">Server</th>
+                                <th style="padding:8px 6px; text-align:left;">Size</th>
+                                <th style="padding:8px 6px; text-align:left;">Last Modified</th><th style="padding:8px 6px; text-align:left;">Create Time</th>
+                                <th style="padding:8px 6px; text-align:left;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRows || '<tr><td colspan="7" style="text-align:center;padding:15px;">No results found</td></tr>'}</tbody>
+                    </table>
+                    ${paginationBar}
+                </div>`);
+        }
+
+        // 渲染文件夹树
+        function buildTree(nodes, path = '', level = 1) {
+            let html = '<ul>';
+            nodes.forEach(node => {
+                const fullPath = path ? path + '/' + node.name : node.name;
+                const hasChildren = node.children && node.children.length > 0;
+                const expanded = level <= 2;
+                html += `<li data-path="${fullPath}" class="folder">
+                    ${hasChildren ? `<span class="toggle">${expanded ? '▼' : '▶'}</span>` : '<span style="display:inline-block;width:14px;"></span>'}
+                    <span class="icon-folder">📁</span>
+                    <span class="folder-name">${node.name}</span>
+                    ${hasChildren ? `<div class="children" style="display:${expanded ? 'block' : 'none'};">${buildTree(node.children, fullPath, level + 1)}</div>` : ''}
+                </li>`;
+            });
+            return html + '</ul>';
+        }
+
+        // 初始化文件夹选择器
+        function initTreeSelector() {
+            const $input = $('#folderTreeSelect');
+            const $dropdown = $('#treeDropdown');
+            $dropdown.html(buildTree(AppConfig.folderTree));
+
+            // 双击显示下拉列表
+            $input.on('dblclick', () => $dropdown.toggle());
+
+            // 输入提示功能
+            $input.on('input', function() {
+                const inputVal = $(this).val().toLowerCase();
+                const suggestionsContainer = $('#folderSuggestions');
+
+                if (!inputVal) {
+                    suggestionsContainer.hide();
+                    return;
+                }
+
+                // 收集所有文件夹路径
+                const allPaths = [];
+                function traverseTree(node, currentPath = '') {
+                    const newPath = currentPath ? `${currentPath}/${node.name}` : node.name;
+                    allPaths.push(newPath);
+                    if (node.children && node.children.length) {
+                        node.children.forEach(child => traverseTree(child, newPath));
+                    }
+                }
+
+                AppConfig.folderTree.forEach(root => traverseTree(root));
+
+                // 过滤匹配的路径
+                const matchedPaths = allPaths.filter(path =>
+                    path.toLowerCase().includes(inputVal)
+                );
+
+                if (matchedPaths.length) {
+                    suggestionsContainer.html(matchedPaths.map(path =>
+                        `<div class="folder-suggestion-item" data-path="${path}">${path}</div>`
+                    ).join('')).show();
+                } else {
+                    suggestionsContainer.hide();
+                }
+            });
+
+            // 点击选择提示项
+            $('#folderSuggestions').on('click', '.folder-suggestion-item', function() {
+                const path = $(this).data('path');
+                $input.val(path);
+                $('#folderSuggestions').hide();
+            });
+
+            // 点击页面其他地方隐藏提示
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.tree-select-container').length) {
+                    $('#folderSuggestions').hide();
+                }
+            });
+
+            // 回车隐藏下拉列表
+            $input.on('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    $dropdown.hide();
+                    $('#folderSuggestions').hide();
+                }
+            });
+            $(document).on('click', e => !$(e.target).closest('.tree-select-container').length && $dropdown.hide());
+
+            $dropdown.on('click', e => {
+                const $li = $(e.target).closest('li');
+                if (!$li.length) return;
+
+                if ($(e.target).hasClass('toggle')) {
+                    const $children = $li.children('.children');
+                    if ($children.length) {
+                        const isOpen = $children.css('display') === 'block';
+                        $children.toggle();
+                        $(e.target).text(isOpen ? '▶' : '▼');
+                    }
+                } else {
+                    $dropdown.find('.selected').removeClass('selected');
+                    $li.addClass('selected');
+                    const selectedPath = $li.attr('data-path');
+                    $input.val(selectedPath);
+                    $('#folderSuggestions').hide();
+                    $dropdown.hide();
+                }
+            });
+        }
+
+        // 搜索功能实现
+        function performSearch() {
+            const checkedServers = $('#serverCheckboxes input[type=checkbox]:checked').map((_, el) => el.value).get();
+            const folder = $('#folderTreeSelect').val();
+            const fileNameInput = $('#fileInput').val().trim();
+            const $results = $('#results');
+
+            // 输入验证
+            if (checkedServers.length === 0) {
+                $results.html('<div class="result-card" style="color:#dc2626;padding:15px;">⚠️ 请至少选择一个服务器</div>');
+                return;
+            }
+            if (!folder) {
+                $results.html('<div class="result-card" style="color:#dc2626;padding:15px;">⚠️ 请选择文件夹路径</div>');
+                return;
+            }
+            if (!fileNameInput) {
+                $results.html('<div class="result-card" style="color:#dc2626;padding:15px;">⚠️ 请输入搜索关键字</div>');
+                return;
+            }
+
+            // 显示加载状态
+            $('#loadingIndicator').show();
+            $results.empty();
+
+            // 模拟搜索请求
+            setTimeout(() => {
+                AppState.searchResults = [];
+                const fileTypes = ['log', 'txt', 'csv', 'json', 'xml'];
+                const keyword = fileNameInput.toLowerCase();
+
+                // 生成模拟数据
+                for (let i = 0; i < 57; i++) {
+                    const server = checkedServers[i % checkedServers.length];
+                    const size = Math.floor(Math.random() * 5 * 1024 * 1024 * 1024); // 0-5GB
+                    const lastModified = new Date(Date.now() - Math.random() * 1e10).toLocaleString();
+                    const ext = fileTypes[i % fileTypes.length];
+                    const fileName = `file_${i}.${ext}`;
+                    
+                    // 生成模拟文件内容 (包含多行文本)
+                    let content = `File: ${fileName}\n`;
+                    content += `Server: ${server}\n`;
+                    content += `Last Modified: ${lastModified}\n`;
+                    content += `Size: ${formatFileSize(size)}\n\n`;
+                    
+                    // 添加随机内容行
+                    for (let j = 0; j < Math.floor(Math.random() * 500) + 300; j++) {
+                        content += `Line ${j + 1}: Sample log entry ${j} - ${Math.random().toString(36).substring(2)}\n`;
+                    }
+                    
+                    // 确保包含搜索关键字
+                    if (Math.random() > 0.3) {
+                        const randomLine = Math.floor(Math.random() * 50) + 5;
+                        content = content.split('\n');
+                        content[randomLine] = `${content[randomLine]} [KEYWORD: ${keyword}]`;
+                        content = content.join('\n');
+                    }
+
+                    AppState.searchResults.push({
+                        fileName,
+                        fileType: getFileType(fileName),
+                        server,
+                        size,
+                        lastModified,
+                        createTime: new Date(Date.now() - Math.random() * 2e10).toLocaleString(),
+                        content: content
+                    });
+                }
+
+                // 隐藏加载状态并渲染结果
+                $('#loadingIndicator').hide();
+                renderResultsPage(1);
+            }, AppConfig.searchDelay);
+        }
+
+        // 文件查看功能
+        function viewFile(file) {
+            AppState.currentFile = file;
+            $('#viewContent').text(file.content);
+            $('#viewModal').css('display', 'flex');
+        }
+
+        // File download function
+        function downloadFile(file) {
+            const blob = new Blob([file.content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Tail功能 - 显示文件最后N行
+        function tailFile(file) {
+            AppState.currentFile = file;
+            const lines = file.content.split('\n');
+            const tailLines = Math.min(AppConfig.tailLines, lines.length);
+            const tailContent = lines.slice(-tailLines).join('\n');
+            $('#tailContent').text(tailContent);
+            $('#tailModal').css('display', 'flex');
+        }
+
+        // 初始化应用
+        $(function() {
+            // 渲染服务器复选框
+            AppConfig.serverGroups.forEach(group => {
+                    const groupNameLower = group.name.toLowerCase();
+                    const $groupContainer = $(`<div class="server-group" data-group="${groupNameLower}">
+                      <input type="checkbox" id="group-${groupNameLower}" class="group-checkbox" ${groupNameLower === 'sit' ? 'checked' : ''}>
+                      <label for="group-${groupNameLower}"><strong>${group.name}</strong></label>
+                    </div>`);
+                    $('#serverCheckboxes').append($groupContainer);
+                    group.servers.forEach((srv, idx) => {
+                        const id = `server_${group.name}_${idx}`;
+                        $groupContainer.append(
+                          `<input type="checkbox" id="${id}" value="${srv}" ${groupNameLower === 'sit' ? 'checked' : ''}>
+                          <label for="${id}">${srv}</label>`);
+                    });
+            });
+
+            // 分组复选框与服务器复选框联动
+            $('.group-checkbox').change(function() {
+                const $group = $(this).closest('.server-group');
+                const isChecked = $(this).prop('checked');
+                $group.find('input[type="checkbox"]:not(.group-checkbox)').prop('checked', isChecked);
+            });
+
+            // 初始化文件夹选择器
+            initTreeSelector();
+
+            // 绑定搜索按钮事件
+            $('#searchBtn').on('click', performSearch);
+
+            // 绑定清除按钮事件
+            $('#clearBtn').on('click', () => {
+                $('#fileInput').val('');
+                $('#folderTreeSelect').val('');
+                $('#results').empty();
+                AppState.searchResults = [];
+            });
+
+            // 绑定分页事件
+            $(document).on('change', '#pageSizeSelect', function() {
+                AppState.pageSize = parseInt($(this).val());
+                renderResultsPage(1);
+            });
+
+            $(document).on('click', '.page-btn', function() {
+                const page = parseInt($(this).data('page'));
+                if (page > 0 && page <= Math.ceil(AppState.searchResults.length / AppState.pageSize)) {
+                    renderResultsPage(page);
+                }
+            });
+
+            // 绑定操作按钮事件
+            $(document).on('click', '.action-view', function(e) {
+                e.preventDefault();
+                const idx = parseInt($(this).data('idx'));
+                const file = AppState.searchResults[idx];
+                if (file) viewFile(file);
+            });
+
+            $(document).on('click', '.action-download', function(e) {
+                e.preventDefault();
+                const idx = parseInt($(this).data('idx'));
+                const file = AppState.searchResults[idx];
+                if (file) downloadFile(file);
+            });
+
+            $(document).on('click', '.action-tail', function(e) {
+                e.preventDefault();
+                const idx = parseInt($(this).data('idx'));
+                const file = AppState.searchResults[idx];
+                if (file) tailFile(file);
+            });
+
+            // 绑定模态框关闭事件
+            $('.modal-close, .modal').on('click', function(e) {
+                if (e.target.classList.contains('modal') || e.target.classList.contains('modal-close')) {
+                    $('.modal').css('display', 'none');
+                }
+            });
+
+            // 绑定Tail刷新按钮事件
+            $('#refreshTail').on('click', function() {
+                if (AppState.currentFile) {
+                    tailFile(AppState.currentFile);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

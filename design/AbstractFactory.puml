@@ -1,0 +1,52 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+abstract class GUIFactory{
++ void CreateScrollBar();
++ void CreateButton();
++ void CreateMenu();
+}
+
+GUIFactory <|-- MotiFactory
+
+class MotiFactory {
++ void createScrollBar();
++ void CreateButton();
++ void CreateMenu();
+}
+
+
+GUIFactory <|-- PMFactory
+
+class PMFactory {
++ void createScrollBar();
++ void CreateButton();
++ void CreateMenu();
+}
+
+GUIFactory <|-- MacFactory
+
+class MacFactory {
++ void createScrollBar();
++ void CreateButton();
++ void CreateMenu();
+}
+
+
+Glyph <|-- Button
+Glyph <|-- ScrollBar
+Glyph <|-- Menu
+
+Button <|-- MotiButton
+Button <|-- PMButton
+Button <|-- MacButton
+
+ScrollBar <|-- MotiScrollBar
+ScrollBar <|-- PMScrollBar
+ScrollBar <|-- MacScrollBar
+
+Menu <|-- MotiMenu
+Menu <|-- PMMenu
+Menu <|-- MacMenu
+
+@enduml

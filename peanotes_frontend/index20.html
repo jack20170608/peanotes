@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+
+        .query-container {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .select-column {
+            display: flex;
+            flex-direction: column;
+            margin-right: 10px;
+        }
+
+        .select-column select {
+            margin-bottom: 10px;
+        }
+
+        #instance-name, #database-name {
+            width: 200px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        #sql-input {
+            flex-grow: 1;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            position: relative;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .expanded {
+            white-space: normal;
+            word-break: break-word;
+            max-width: none;
+        }
+
+        .highlight {
+            background-color: yellow !important;
+        }
+
+        #query-info {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<h1>SQL Query Page</h1>
+<div class="query-container">
+    <div class="select-column">
+        <select id="instance-name">
+            <option value="" disabled selected>Select Database Instance</option>
+            <!-- Options will be loaded dynamically -->
+        </select>
+        <select id="database-name" disabled>
+            <option value="" disabled selected>Select Database Name</option>
+            <!-- Options will be loaded dynamically based on instance name -->
+        </select>
+    </div>
+    <textarea id="sql-input" placeholder="Please enter the SQL query statement"></textarea>
+</div>
+<button id="execute-query">Execute Query</button>
+<div id="result">Query results will be displayed here</div>
+<div id="query-info"></div>
+
+<script>
+    $(document).ready(function () {
+        // Load database instances
+        $.ajax({
+            url: '/api/v1/instances',
+            method: 'GET',
+            success: function (data) {
+                const instanceSelect = $('#instance-name');
+                data.instances.forEach(function (instance) {
+                    instanceSelect.append(new Option(instance.name, instance.name));
+                });
+            },
+            error: function () {
+                alert('Error loading database instances');
+            }
+        });
+
+        // Load databases based on selected instance
+        $('#instance-name').change(function () {
+            const instanceName = $(this).val();
+            const databaseSelect = $('#database-name');
+            databaseSelect.empty().append(new Option('Select Database Name', '', true, true)).prop('disabled', true);
+
+            if (instanceName) {
+                $.ajax({
+                    url: `/api/v1/databases?instance=${instanceName}`,
+                    method: 'GET',
+                    success: function (data) {
+                        data.databases.forEach(function (database) {
+                            databaseSelect.append(new Option(database.name, database.name));
+                        });
+                        databaseSelect.prop('disabled', false);
+                    },
+                    error: function () {
+                        alert('Error loading databases');
+                    }
+                });
+            }
+        });
+
+        let currentCell;
+
+        $(document).on('mouseover', 'td', function () {
+            currentCell = $(this);
+        });
+
+        $(document).on('keydown', function (event) {
+            if (event.ctrlKey && event.key === 'c' && currentCell) {
+                const text = currentCell.text();
+                navigator.clipboard.writeText(text).then(function () {
+                    console.log('Copied to clipboard');
+                }, function (err) {
+                    console.error('Could not copy text: ', err);
+                });
+            }
+        });
+
+        $('#execute-query').click(function () {
+            const instanceName = $('#instance-name').val();
+            const dbName = $('#database-name').val();
+            const sql = $('#sql-input').val().trim();
+
+            if (!instanceName || !dbName || sql.length === 0) {
+                alert("Please select a database instance, database name and enter a SQL query statement.");
+                return;
+            }
+
+            const requestData = {
+                instanceName: instanceName,
+                dbName: dbName,
+                sql: sql
+            };
+
+            $.ajax({
+                url: 'api/v1/query',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function (response) {
+                    displayResults(response.data);
+                    displayQueryInfo(response.timeCost, response.rowCount);
+                },
+                error: function () {
+                    alert('Error executing query');
+                }
+            });
+        });
+    });
+
+    function displayResults(data) {
+        const resultDiv = $('#result');
+        resultDiv.html("<h2>Query Results</h2>");
+
+        const table = $('<table></table>');
+        const thead = $('<thead></thead>');
+        const tbody = $('<tbody></tbody>');
+
+        if (data.length > 0) {
+            const headerRow = $('<tr></tr>');
+            Object.keys(data[0]).forEach(function (key) {
+                const th = $('<th></th>').text(key);
+                headerRow.append(th);
+            });
+            thead.append(headerRow);
+
+            data.forEach(function (row) {
+                const tr = $('<tr></tr>');
+                Object.values(row).forEach(function (cell) {
+                    const td = $('<td></td>').text(cell);
+                    td.on('click', function () {
+                        $(this).toggleClass('expanded');
+                        highlightRow(td);
+                    });
+                    tr.append(td);
+                });
+                tbody.append(tr);
+            });
+
+            table.append(thead);
+            table.append(tbody);
+            resultDiv.append(table);
+        } else {
+            resultDiv.append("<p>No results found.</p>");
+        }
+    }
+
+    function displayQueryInfo(timeCost, rowCount) {
+        $('#query-info').html(`<p>Query Time: ${timeCost}</p><p>Number of Rows: ${rowCount}</p>`);
+    }
+
+    function highlightRow(cell) {
+        $('.highlight').removeClass('highlight');
+        const row = cell.parent();
+        row.find('td').addClass('highlight');
+    }
+</script>
+</body>
+</html>

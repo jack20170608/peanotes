@@ -40,12 +40,13 @@
 
     <!-- sub modules -->
     <modules>
-        <module>common</module>
+<!--        <module>common</module>-->
         <module>api-gateway</module>
         <module>backend</module>
         <module>keepie</module>
         <module>api-autotest</module>
         <module>backend-scaffold</module>
+        <module>leetcode</module>
     </modules>
 
     <repositories>
@@ -201,6 +202,11 @@
             <dependency>
                 <groupId>top.ilovemyhome</groupId>
                 <artifactId>common-db</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>top.ilovemyhome</groupId>
+                <artifactId>common-http</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

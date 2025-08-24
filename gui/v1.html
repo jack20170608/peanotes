@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f6f8fa; margin: 0; }
+
+        #main-layout {
+            width: 100%;
+            max-width: 95vw;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 32px 24px;
+        }
+        .row { display: flex; align-items: center; gap: 18px; margin-bottom: 22px; flex-wrap: wrap; }
+        .row label { font-weight: bold; margin-right: 8px; }
+        .checkbox-group label { font-weight: normal; margin-right: 16px; }
+        select, input[type="text"] { padding: 7px 10px; border: 1px solid #d0d7de; border-radius: 5px; font-size: 15px; background: #f6f8fa; }
+        select:focus, input[type="text"]:focus { border: 1.5px solid #0969da; outline: none; }
+        button { padding: 8px 20px; background: #0969da; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #035fc7; }
+        #results { margin-top: 28px; background: #f9fafb; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); padding: 18px 14px; min-height: 80px; }
+        @media (max-width: 600px) {
+            #main-layout { max-width: 100%; margin: 0; border-radius: 0; padding: 12px 4px; }
+            .row { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 16px; }
+            .row label { margin-bottom: 2px; }
+            #results { padding: 10px 4px; }
+        }
+    </style>
+</head>
+<body>
+<div id="main-layout">
+    <div class="row" id="server-row">
+        <label>Servers:</label>
+        <div class="checkbox-group" id="serverCheckboxes"></div>
+    </div>
+    <div class="row">
+        <label for="folderSelect">Folder:</label>
+        <select id="folderSelect"></select>
+        <label for="fileInput">File Name:</label>
+        <input type="text" id="fileInput" placeholder="Enter file name">
+        <button onclick="handleSearch()">Search</button>
+    </div>
+    <div id="results"></div>
+</div>
+<script>
+    const servers = ['Server A', 'Server B', 'Server C'];
+    const folders = ['/project/src', '/project/docs', '/project/tests'];
+    const serverCheckboxes = document.getElementById('serverCheckboxes');
+    servers.forEach((srv, idx) => {
+        const id = 'server_' + idx;
+        serverCheckboxes.innerHTML += `<input type="checkbox" id="${id}" value="${srv}" checked>
+            <label for="${id}">${srv}</label>`;
+    });
+    const folderSelect = document.getElementById('folderSelect');
+    folders.forEach(f => {
+        folderSelect.innerHTML += `<option value="${f}">${f}</option>`;
+    });
+    function handleSearch() {
+        const checkedServers = Array.from(document.querySelectorAll('#serverCheckboxes input[type=checkbox]:checked'))
+            .map(cb => cb.value);
+        const folder = folderSelect.value;
+        const fileName = document.getElementById('fileInput').value.trim();
+        if (checkedServers.length === 0) {
+            document.getElementById('results').innerHTML = 'Please select at least one server.';
+            return;
+        }
+        if (!fileName) {
+            document.getElementById('results').innerHTML = 'Please enter a file name.';
+            return;
+        }
+        document.getElementById('results').innerHTML =
+            `<div>Searching for <b>${fileName}</b> in <b>${folder}</b> on servers: <b>${checkedServers.join(', ')}</b>...</div>
+            <ul>
+                <li>${folder}/${fileName} (on ${checkedServers[0]})</li>
+            </ul>`;
+    }
+</script>
+</body>
+</html>

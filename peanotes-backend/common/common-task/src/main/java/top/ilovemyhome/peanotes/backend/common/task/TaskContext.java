@@ -72,10 +72,17 @@ public abstract class TaskContext {
     }
 
     protected TaskContext(Jdbi jdbi, ExecutorService threadPool) {
-        int nThreads = Runtime.getRuntime().availableProcessors();
+        int totalProcessorSize = Runtime.getRuntime().availableProcessors();
+        int nThreads = Math.min(totalProcessorSize, 16);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat("TaskDagService-%d").build();
-        this.threadPool = Objects.requireNonNullElseGet(threadPool, () -> new ThreadPoolExecutor(nThreads, 16, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(1024)
-            , namedThreadFactory, new ThreadPoolExecutor.AbortPolicy()));
+        this.threadPool = Objects.requireNonNullElseGet(
+            threadPool
+            , () -> {
+                return new ThreadPoolExecutor(nThreads, 16, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(1024)
+                    , namedThreadFactory, new ThreadPoolExecutor.AbortPolicy())
+                    ;
+            }
+        );
         this.jdbi = jdbi;
         //customise some argument mapper
         jdbi.registerArgument(new AbstractArgumentFactory<Map<String, String>>(Types.VARCHAR) {

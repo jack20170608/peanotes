@@ -1,0 +1,20 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  overflow: hidden;
+}
+
+circle {
+  fill: #4A988A;
+}
+
+text {
+  font-family: "Open Sans", sans-serif;
+  text-anchor: middle;
+  color: rgb(34, 34, 34);
+  font-size: 12px;
+}

@@ -1,0 +1,47 @@
+### 2.1 Use token to get Host info with admin role
+GET {{baseUrl}}/hosthelper/query/api/v1/allHosts
+Accept: application/json
+Authorization: Bearer {{admin_auth_token}}
+
+> {%
+  client.test("Request executed successfully", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+
+  client.test("Response content-type is json", function() {
+    var type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+  })
+%}
+
+### 2.2 Use token to get Host info with read role
+GET {{baseUrl}}/hosthelper/query/api/v1/allHosts
+Accept: application/json
+Authorization: Bearer {{read_auth_token}}
+
+> {%
+  client.test("Request executed successfully", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+
+  client.test("Response content-type is json", function() {
+    var type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+  })
+%}
+
+### 2.3 Query the file
+POST {{baseUrl}}/hosthelper/query/api/v1/search?page=0&pageSize=20&sortBy=name&direction=ASC
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{admin_auth_token}}
+
+{
+  "hostLabel": "local",
+  "filePathPattern": "/appvol/runtime/logs/",
+  "keywords": "BBA",
+  "minFileSize": 100,
+  "maxFileSize": 1000000,
+  "minModifiedTime": "2020-01-01 10:00:00.111",
+  "maxModifiedTime": "2028-01-01 10:00:00.222"
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件搜索工具</title>
+    <link type="text/css" href="css/style.css">
+</head>
+<body>
+<div class="container">
+    <h1>文件搜索工具</h1>
+    <input type="text" id="searchInput" placeholder="输入要搜索的文件或路径...">
+    <button onclick="searchFiles()">搜索</button>
+    <div class="result-list" id="results"></div>
+</div>
+
+<script>
+    async function searchFiles() {
+        const searchTerm = document.getElementById('searchInput').value;
+        if (!searchTerm) return;
+
+        try {
+            const response = await fetch('/search', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    search: searchTerm
+                })
+            });
+
+            const data = await response.json();
+            console.log('搜索结果:', data);
+
+            // 渲染结果到页面上
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            data.forEach((file, index) => {
+                const fileElement = document.createElement('div');
+                fileElement.className = 'file-item';
+                fileElement.innerHTML = `
+                        <strong>第${index + 1}个:</strong> ${file.name}<br>
+                        <small>${file.path}</small>
+                    `;
+                resultsDiv.appendChild(fileElement);
+            });
+        } catch (error) {
+            console.error('搜索失败：', error);
+            resultsDiv.innerHTML = '<div class="file-item" style="color: red;">搜索失败</div>';
+        }
+    }
+
+    // 如果用户使用键盘输入，可以添加事件监听器
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchFiles();
+        }
+    });
+</script>
+</body>
+</html>

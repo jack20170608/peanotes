@@ -26,6 +26,11 @@ public record Order(Long id
     , LocalDateTime createDt
     , LocalDateTime lastUpdateDt) {
 
+    @Override
+    public LocalDateTime createDt() {
+        return createDt;
+    }
+
     public enum Field {
         id("id", true),
         sequenceNo("sequence_no"),
@@ -33,11 +38,10 @@ public record Order(Long id
         productId("product_id"),
         valueDate("value_date"),
         price("price"),
-        quantity("quantity"),
+        quantity("quality"),
         value("value"),
         createDt("create_dt"),
-        lastUpdateDt("last_update_dt")
-        ;
+        lastUpdateDt("last_update_dt");
 
         private final String dbColumn;
         private final boolean isId;
@@ -69,7 +73,7 @@ public record Order(Long id
         .map(Enum::name)
         .findFirst().orElse(null);
 
-    public static Stream<Order> randomObj(int size) {
+    public static Stream<Order> randomObj(List<Long> ids, int size) {
         if (size < 1) {
             return null;
         }
@@ -93,19 +97,18 @@ public record Order(Long id
         List<LocalDateTime> lastUpdateDts = createDtDeltas.stream().map(c -> now.plusSeconds(c).plusSeconds(randomGenerator.nextInt(1, 200)))
             .toList();
 
-        return IntStream.range(0, size).boxed().map(idx -> {
-            return Order.builder()
-                .sequenceNo(UUID.randomUUID().toString())
-                .customerId(customerIds.get(idx))
-                .productId(randomProductIds.get(idx))
-                .valueDate(today.plusDays(dateDeltas.get(idx)))
-                .price(prices.get(idx))
-                .quantity(quantities.get(idx))
-                .value(values.get(idx))
-                .createDt(now.plusSeconds(createDtDeltas.get(idx)))
-                .lastUpdateDt(lastUpdateDts.get(idx))
-                .build();
-        });
+        return IntStream.range(0, size).boxed().map(idx -> Order.builder()
+            .id(ids.get(idx))
+            .sequenceNo(UUID.randomUUID().toString())
+            .customerId(customerIds.get(idx))
+            .productId(randomProductIds.get(idx))
+            .valueDate(today.plusDays(dateDeltas.get(idx)))
+            .price(prices.get(idx))
+            .quantity(quantities.get(idx))
+            .value(values.get(idx))
+            .createDt(now.plusSeconds(createDtDeltas.get(idx)))
+            .lastUpdateDt(lastUpdateDts.get(idx))
+            .build());
     }
 
 

@@ -13,7 +13,8 @@ import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskOrderDao;
 import top.ilovemyhome.peanotes.backend.common.task.persistent.TaskRecordDao;
 import top.ilovemyhome.peanotes.backend.dao.operation.OperationLogDaoImpl;
 import top.ilovemyhome.peanotes.backend.dao.order.OrderDao;
-import top.ilovemyhome.peanotes.backend.dao.order.OrderDaoImpl;
+import top.ilovemyhome.peanotes.backend.dao.order.OrderDuckdbDaoImpl;
+import top.ilovemyhome.peanotes.backend.dao.order.OrderPostgresDaoImpl;
 import top.ilovemyhome.peanotes.backend.dao.system.SystemParamDaoImpl;
 import top.ilovemyhome.peanotes.backend.service.operation.OperationLogCrudService;
 import top.ilovemyhome.peanotes.backend.service.system.SystemParamCrudService;
@@ -66,9 +67,14 @@ public class AppContext {
         BEAN_NAME_FACTORY.put("taskOrderDao", taskOrderDao);
         taskContext.setTaskOrderDao(taskOrderDao);
 
-        OrderDao orderDao = new OrderDaoImpl(this);
-        BEAN_FACTORY.put(OrderDao.class, orderDao);
-        BEAN_NAME_FACTORY.put("orderDao", orderDao);
+        //The 2 different daos
+        OrderDao orderDuckdbDao = new OrderDuckdbDaoImpl(this);
+        BEAN_FACTORY.put(OrderDuckdbDaoImpl.class, orderDuckdbDao);
+        BEAN_NAME_FACTORY.put("orderDuckdbDao", orderDuckdbDao);
+
+        OrderDao orderPostgresDao = new OrderPostgresDaoImpl(this);
+        BEAN_FACTORY.put(OrderPostgresDaoImpl.class, orderPostgresDao);
+        BEAN_NAME_FACTORY.put("orderPostgresDao", orderDuckdbDao);
     }
 
     private void initService() {

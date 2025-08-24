@@ -6,6 +6,7 @@ import io.muserver.rest.Required;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.ThreadUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -19,9 +20,14 @@ import top.ilovemyhome.peanotes.backend.common.db.dao.page.Page;
 import top.ilovemyhome.peanotes.backend.common.db.dao.page.impl.PageRequest;
 import top.ilovemyhome.peanotes.backend.common.utils.LocalDateUtils;
 import top.ilovemyhome.peanotes.backend.dao.order.OrderDao;
+import top.ilovemyhome.peanotes.backend.dao.order.OrderDuckdbDaoImpl;
+import top.ilovemyhome.peanotes.backend.dao.order.OrderPostgresDaoImpl;
 import top.ilovemyhome.peanotes.backend.web.dto.common.Order;
 
+import java.math.BigDecimal;
 import java.sql.*;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +48,8 @@ public class DuckdbPocHandler {
 
     public DuckdbPocHandler(AppContext appContext) {
         try {
-            this.orderDao = appContext.getBean("orderDao", OrderDao.class);
+            this.orderDuckdbDao = appContext.getBean("orderDuckdbDao", OrderDuckdbDaoImpl.class);
+            this.orderPostgresDao = appContext.getBean("orderPostgresDao", OrderPostgresDaoImpl.class);
 
             Class.forName("org.duckdb.DuckDBDriver");
             //In memory database
@@ -94,8 +101,11 @@ public class DuckdbPocHandler {
             }
             case duck_db_file -> {
                 for (int i = 1; i <= batchCount; i++) {
-                    boolean success = insertDataTask.apply(duckDbFileConn);
-                    logger.info("Batch=[{}/{}], success=[{}].", i, batchCount, success);
+                    List<Long> ids = orderDuckdbDao.getNextIds(batchSize);
+                    List<Order> orders = Objects.requireNonNull(Order.randomObj(ids, 10000)).toList();
+                    orders.forEach(o -> {
+                        orderDuckdbDao.create(o);
+                    });
                 }
             }
         }
@@ -134,16 +144,41 @@ public class DuckdbPocHandler {
     @GET
     @Path("/query")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response query(@QueryParam("page") @DefaultValue("0") int page
-        , @QueryParam("pageSize") @DefaultValue("100") int pageSize
+    public Response query(@QueryParam("dbType") @DefaultValue("duck_db_file") DbType dbType
+        , @QueryParam("page") @DefaultValue("0") int page
+        , @QueryParam("pageSize") @DefaultValue("1000") int pageSize
         , @QueryParam("sortBy") @DefaultValue("ID") String sortBy
-        , @QueryParam("direction") @DefaultValue("ASC") Direction direction) {
+        , @QueryParam("direction") @DefaultValue("ASC") Direction direction
+        , @QueryParam("minPrice") @DefaultValue("1.00")BigDecimal minPrice
+        , @QueryParam("maxPrice") @DefaultValue("1000.00") BigDecimal maxPrice
+        , @QueryParam("minValueDate") @DefaultValue("2022-02-02") LocalDate minValueDate
+        , @QueryParam("maxValueDate") @DefaultValue("2023-03-03") LocalDate maxValueDate) {
+        logger.info("query price [{},{}], value date [{},{}].", minPrice, maxPrice, minValueDate, maxValueDate);
         StopWatch sw = new StopWatch();
         sw.start();
         PageRequest pageRequest = new PageRequest(page, pageSize, direction, sortBy);
-        Page<Order> result = orderDao.find((SearchCriteria) () -> "", pageRequest);
+        SearchCriteria searchCriteria = new SearchCriteria() {
+            @Override
+            public Map<String, Object> normalParams() {
+                return Map.of("minPrice", minPrice, "maxPrice", maxPrice, "minValueDate", minValueDate, "maxValueDate", maxValueDate);
+            }
+
+            @Override
+            public String whereClause() {
+                return " where price between :minPrice and :maxPrice and value_date between :minValueDate and :maxValueDate";
+            }
+        };
+        Page<Order> result = null;
+        switch (dbType){
+            case duck_db_file ->
+                result = orderDuckdbDao.find(searchCriteria, pageRequest);
+            case pg_db ->
+                result = orderPostgresDao.find(searchCriteria, pageRequest);
+            default ->
+                throw new IllegalStateException("Not supported operation!");
+        }
         sw.stop();
-        logger.info("Time cost=[{}ms].", sw.getTime(TimeUnit.MILLISECONDS));
+        logger.info("@@@@@ Time cost=[{}ms].", sw.getTime(TimeUnit.MILLISECONDS));
         return Response.ok(result).build();
     }
 
@@ -152,7 +187,7 @@ public class DuckdbPocHandler {
     public Response exportToFile() {
         StopWatch sw = new StopWatch();
         sw.start();
-        try (Statement stmt = duckDbInMemConn.createStatement()) {
+        try (Statement stmt = duckDbFileConn.createStatement()) {
             stmt.execute("COPY t_order TO 'output2.parquet' (FORMAT PARQUET);");
         } catch (SQLException e) {
             logger.error("Error in exportToFile", e);
@@ -179,7 +214,7 @@ public class DuckdbPocHandler {
         public Boolean apply(Connection conn) {
             boolean success = false;
             try (PreparedStatement prpt = conn.prepareStatement(insertDataSql)) {
-                Objects.requireNonNull(Order.randomObj(10000)).toList().forEach(o -> {
+                Objects.requireNonNull(Order.randomObj(null, 10000)).toList().forEach(o -> {
                     try {
                         prpt.setString(1, o.sequenceNo());
                         prpt.setInt(2, o.customerId());
@@ -216,7 +251,7 @@ public class DuckdbPocHandler {
                         product_id INTEGER NOT NULL ,
                         value_date DATE,
                         price    DECIMAL ,
-                        quality INTEGER NOT NULL,
+                        quality INTEGER NOT NULL DEFAULT 0,
                         value    DECIMAL,
                         create_dt  TIMESTAMP,
                         last_update_dt TIMESTAMP
@@ -274,7 +309,8 @@ public class DuckdbPocHandler {
 
     }
 
-    private final OrderDao orderDao;
+    private final OrderDao orderDuckdbDao;
+    private final OrderDao orderPostgresDao;
 
     private static final Logger logger = LoggerFactory.getLogger(DuckdbPocHandler.class);
 }

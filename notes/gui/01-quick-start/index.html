@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>d3js quick start</title>
+    <link rel="icon" href="../image/logo.png">
+    <script type="module" src="../js/d3.v7.js"></script>
+    <link type="text/css" href="../css/common.css" rel="stylesheet">
+    <style>
+        #barChart div {
+            display: inline-block;
+            background: #4285F4;
+            width: 20px;
+            margin-right: 3px;
+        }
+
+        #barChart2 div {
+            display: inline-block;
+            height: 20px;
+            width: 20px;
+            margin-right: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="barChart"></div>
+<script type="module">
+    // the bar chart
+    d3.select('#barChart')
+        .selectAll("div")
+        .data([10, 20, 30, 40, 50, 60, 80])
+        .enter()
+        .append("div")
+        .style("height", (d) => d + "px");
+
+
+</script>
+<hr>
+<!-- the bar chart2 -->
+<div id="barChart2"></div>
+<script type="module">
+    const colorMap = d3.interpolateRgb(
+        d3.rgb('#d6e685'),
+        d3.rgb('#1e6823')
+    );
+    d3.select('#barChart2')
+        .selectAll("div")
+        .data([0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1])
+        .enter()
+        .append("div")
+        .style("background-color", (d) => {
+            return d === 0 ? '#eee' : colorMap(d)
+        });
+</script>
+<hr>
+<!-- explorer the svg -->
+<svg>
+    <circle fill="#3E5693" cx="50" cy="120" r="20"/>
+    <text x="100" y="100">Hello SVG!</text>
+    <path d="M100,10L150,70L50,70Z" fill="#BEDBC3" stroke="#539E91" stroke-width="3"/>
+</svg>
+<hr>
+<svg>
+    <g>
+        <circle r="20" cx="50" cy="40" fill="#BEDBC3"></circle>
+        <text x="40" y="90">C1</text>
+    </g>
+    <g>
+        <circle r="12" cx="100" cy="40" fill="#BEDBC3"></circle>
+        <text x="90" y="90">C2</text>
+    </g>
+    <g>
+        <circle r="8" cx="150" cy="40" fill="#BEDBC3"></circle>
+        <text x="140" y="90">C3</text>
+    </g>
+    <g>
+        <circle r="27" cx="200" cy="40" fill="#BEDBC3"></circle>
+        <text x="190" y="90">C3</text>
+    </g>
+</svg>
+<hr>
+<svg id="cycleChart" width="250" height="100"></svg>
+<script type="module">
+    const data = [{
+        label: "7am",
+        sales: 20
+    }, {
+        label: "8am",
+        sales: 12
+    }, {
+        label: "9am",
+        sales: 8
+    }, {
+        label: "10am",
+        sales: 27
+    }];
+    const g = d3.select('#cycleChart')
+        .selectAll("g")
+        .data(data)
+        .enter()
+        .append('g');
+    g.append("circle")
+        .attr('cy', 40)
+        .attr('cx', (d, i) => (i + 1) * 50)
+        .attr('fill', '#BEDBC3')
+        .attr('r', (d) => d.sales)
+    g.append("text")
+        .attr('y', 90)
+        .attr('x', (d, i) => (i + 1) * 50)
+        .text((d) => d.label);
+</script>
+<hr>
+
+
+
+</body>
+</html>

@@ -40,6 +40,10 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
+        <dependency>
+            <groupId>top.ilovemyhome</groupId>
+            <artifactId>common-http</artifactId>
+        </dependency>
         <!-- the web -->
         <dependency>
             <groupId>io.muserver</groupId>

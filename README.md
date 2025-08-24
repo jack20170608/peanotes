@@ -52,6 +52,7 @@
 - [logback examples](https://github.com/qos-ch/logback/tree/master/logback-examples)
 - [jdbi getting started](https://jdbi.org/#_getting_started)
 - [guice demos](https://github.com/google/guice/tree/master/examples/guice-demo)
+- [picocli](https://picocli.info/)
 
 ## JWT
 - [java-json-web-tokens-jjwt](https://www.baeldung.com/java-json-web-tokens-jjwt)

@@ -1,0 +1,176 @@
+package top.ilovemyhome.security.soy.core;
+
+
+import top.ilovemyhome.security.soy.core.exception.UnavailableSecurityManagerException;
+import top.ilovemyhome.security.soy.core.mgt.WrappedSecurityManager;
+import top.ilovemyhome.security.soy.core.subject.Subject;
+import top.ilovemyhome.security.soy.core.mgt.SecurityManager;
+import top.ilovemyhome.security.soy.core.util.ThreadContext;
+
+import java.util.Objects;
+import java.util.function.Predicate;
+
+
+/**
+ * Accesses the currently accessible {@code Subject} for the calling code depending on runtime environment.
+ *
+ * @since 0.2
+ */
+public abstract class SecurityUtils {
+
+    /**
+     * ONLY used as a 'backup' in VM Singleton environments (that is, standalone environments), since the
+     * ThreadContext should always be the primary source for Subject instances when possible.
+     */
+    private static volatile SecurityManager securityManager;
+
+    /**
+     * Returns the currently accessible {@code Subject} available to the calling code depending on
+     * runtime environment.
+     * <p/>
+     * This method is provided as a way of obtaining a {@code Subject} without having to resort to
+     * implementation-specific methods.  It also allows the Shiro team to change the underlying implementation of
+     * this method in the future depending on requirements/updates without affecting your code that uses it.
+     *
+     * @return the currently accessible {@code Subject} accessible to the calling code.
+     * @throws IllegalStateException if no {@link Subject Subject} instance or
+     *                               {@link SecurityManager SecurityManager} instance is available with which to obtain
+     *                               a {@code Subject}, which which is considered an invalid application configuration
+     *                               - a Subject should <em>always</em> be available to the caller.
+     */
+    public static Subject getSubject() {
+        Subject subject = ThreadContext.getSubject();
+        if (subject == null) {
+            subject = (new Subject.Builder()).buildSubject();
+            ThreadContext.bind(subject);
+        }
+        return subject;
+    }
+
+    /**
+     * Sets a VM (static) singleton SecurityManager, specifically for transparent use in the
+     * {@link #getSubject() getSubject()} implementation.
+     * <p/>
+     * <b>This method call exists mainly for framework development support.  Application developers should rarely,
+     * if ever, need to call this method.</b>
+     * <p/>
+     * The Shiro development team prefers that SecurityManager instances are non-static application singletons
+     * and <em>not</em> VM static singletons.  Application singletons that do not use static memory require some sort
+     * of application configuration framework to maintain the application-wide SecurityManager instance for you
+     * (for example, Spring or EJB3 environments) such that the object reference does not need to be static.
+     * <p/>
+     * In these environments, Shiro acquires Subject data based on the currently executing Thread via its own
+     * framework integration code, and this is the preferred way to use Shiro.
+     * <p/>
+     * However in some environments, such as a standalone desktop application or Applets that do not use Spring or
+     * EJB or similar config frameworks, a VM-singleton might make more sense (although the former is still preferred).
+     * In these environments, setting the SecurityManager via this method will automatically enable the
+     * {@link #getSubject() getSubject()} call to function with little configuration.
+     * <p/>
+     * For example, in these environments, this will work:
+     * <pre>
+     * DefaultSecurityManager securityManager = new {@link org.apache.shiro.mgt.DefaultSecurityManager DefaultSecurityManager}();
+     * securityManager.setRealms( ... ); //one or more Realms
+     * <b>SecurityUtils.setSecurityManager( securityManager );</b></pre>
+     * <p/>
+     * And then anywhere in the application code, the following call will return the application's Subject:
+     * <pre>
+     * Subject currentUser = SecurityUtils.getSubject();</pre>
+     *
+     * @param securityManager the securityManager instance to set as a VM static singleton.
+     */
+    public static void setSecurityManager(SecurityManager securityManager) {
+        SecurityUtils.securityManager = securityManager;
+    }
+
+    /**
+     * Returns the SecurityManager accessible to the calling code.
+     * <p/>
+     * This implementation favors acquiring a thread-bound {@code SecurityManager} if it can find one.  If one is
+     * not available to the executing thread, it will attempt to use the static singleton if available (see the
+     * {@link #setSecurityManager setSecurityManager} method for more on the static singleton).
+     * <p/>
+     * If neither the thread-local or static singleton instances are available, this method throws an
+     * {@code UnavailableSecurityManagerException} to indicate an error - a SecurityManager should always be accessible
+     * to calling code in an application. If it is not, it is likely due to a Shiro configuration problem.
+     *
+     * @return the SecurityManager accessible to the calling code.
+     * @throws UnavailableSecurityManagerException if there is no {@code SecurityManager} instance available to the
+     *                                             calling code, which typically indicates an invalid application configuration.
+     */
+    public static SecurityManager getSecurityManager() throws UnavailableSecurityManagerException {
+        SecurityManager securityManager = ThreadContext.getSecurityManager();
+        if (securityManager == null) {
+            securityManager = SecurityUtils.securityManager;
+        }
+        if (securityManager == null) {
+            String msg = "No SecurityManager accessible to the calling code, either bound to the "
+                    + ThreadContext.class.getName() + " or as a vm static singleton.  This is an invalid application "
+                    + "configuration.";
+            throw new UnavailableSecurityManagerException(msg);
+        }
+        return securityManager;
+    }
+
+    /**
+     * Returns the SecurityManager, ensuring it is of the specified type.
+     * Unwraps wrapped SecurityManagers if necessary.
+     * Caution, since this method unwraps SecurityManagers, it is possible that
+     * functionality of the wrapper is lost by the returned instance.
+     *
+     * @param type the expected type of the SecurityManager
+     * @return the SecurityManager.
+     * @param <SM> the expected type of the SecurityManager
+     */
+    public static <SM extends SecurityManager> SM getSecurityManager(Class<SM> type) {
+        Objects.requireNonNull(type, "Class argument cannot be null.");
+        return unwrapSecurityManager(getSecurityManager(), type);
+    }
+
+    /**
+     * Determines if the specified security manager is of the specified type or a subclass of the specified type.
+     *
+     * @param securityManager
+     * @param type
+     * @return true if the security manager is of the specified type or a subclass of the specified type, false otherwise.
+     */
+    public static boolean isSecurityManagerTypeOf(SecurityManager securityManager,
+                                                  Class<? extends SecurityManager> type) {
+        return type.isAssignableFrom(unwrapSecurityManager(securityManager, type).getClass());
+    }
+
+    /**
+     * Unwraps wrapped SecurityManagers if necessary.
+     * @param securityManager the SecurityManager to unwrap
+     * @param type the expected type of the SecurityManager
+     * @return the unwrapped SecurityManager
+     * @param <SM> Type of the SecurityManager
+     */
+    public static <SM extends SecurityManager> SM
+    unwrapSecurityManager(SecurityManager securityManager, Class<SM> type) {
+        return unwrapSecurityManager(securityManager, type, type::isAssignableFrom);
+    }
+
+    /**
+     * Unwraps wrapped SecurityManagers if necessary.
+     * @param securityManager the SecurityManager to unwrap
+     * @param type the expected type of the SecurityManager
+     * @param predicate to determine if the SecurityManager is of the expected type
+     * @return the unwrapped SecurityManager
+     * @param <SM> Type of the SecurityManager
+     */
+    @SuppressWarnings("unchecked")
+    public static <SM extends SecurityManager> SM
+    unwrapSecurityManager(SecurityManager securityManager, Class<SM> type,
+                          Predicate<Class<? extends SecurityManager>> predicate) {
+        while (securityManager instanceof WrappedSecurityManager && !predicate.test(securityManager.getClass())) {
+            WrappedSecurityManager wrappedSecurityManager = (WrappedSecurityManager) securityManager;
+            securityManager = wrappedSecurityManager.unwrap();
+            if (securityManager == wrappedSecurityManager) {
+                throw new IllegalStateException("SecurityManager implementation of type [" + type.getName()
+                        + "] is wrapped by itself, which is an invalid configuration.");
+            }
+        }
+        return (SM) securityManager;
+    }
+}

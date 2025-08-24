@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+__SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+__SCRIPT_AUTHOR="jack"
+__SCRIPT_NAME="log.test.bash"
+__SCRIPT_VERSION="1.0.0"
+
+source "${__SCRIPT_DIR}"/log.bash
+
+log_line "Starting" || exit 1
+log_info "${__SCRIPT_NAME} ${__SCRIPT_VERSION} ${__SCRIPT_AUTHOR}"
+log_warn "${__SCRIPT_NAME} ${__SCRIPT_VERSION} ${__SCRIPT_AUTHOR}"
+log_error "${__SCRIPT_NAME} ${__SCRIPT_VERSION} ${__SCRIPT_AUTHOR}"
+log_debug "${__SCRIPT_NAME} ${__SCRIPT_VERSION} ${__SCRIPT_AUTHOR}"
+log_hint "${__SCRIPT_NAME} ${__SCRIPT_VERSION} ${__SCRIPT_AUTHOR}"
+log_line "finished"

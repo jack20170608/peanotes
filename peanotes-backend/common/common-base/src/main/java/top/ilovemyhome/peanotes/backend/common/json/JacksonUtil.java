@@ -79,7 +79,8 @@ public final class JacksonUtil {
             new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")));
         javaTimeModule.addSerializer(YearMonth.class,
             new YearMonthSerializer(DateTimeFormatter.ofPattern("yyyy-MM")));
-        MAPPER.registerModule(new JavaTimeModule());
+        MAPPER.registerModule(javaTimeModule);
+
         MAPPER.configure(SerializationFeature.WRITE_DATE_KEYS_AS_TIMESTAMPS, false);
         MAPPER.configure(SerializationFeature.INDENT_OUTPUT, true);
         MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);

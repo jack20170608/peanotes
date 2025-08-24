@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DAGGen D3.js Example</title>
+    <script src="../js/d3.v7.js"></script>
+    <script src="path/to/daggen-d3.js"></script>
+    <style>
+        .node circle {
+            fill: #999;
+        }
+
+        .node text {
+            font: 12px sans-serif;
+            pointer-events: none;
+        }
+
+        .link {
+            fill: none;
+            stroke: #555;
+            stroke-width: 1.5px;
+        }
+    </style>
+</head>
+<body>
+<svg width="960" height="600"></svg>
+<script>
+    // Generate a simple DAG
+    const dag = {
+        nodes: [
+            { id: "a" },
+            { id: "b" },
+            { id: "c" },
+            { id: "d" },
+            { id: "e" },
+            { id: "f" },
+            { id: "g" }
+        ],
+        links: [
+            { source: "a", target: "b" },
+            { source: "a", target: "c" },
+            { source: "b", target: "d" },
+            { source: "c", target: "e" },
+            { source: "d", target: "f" },
+            { source: "e", target: "f" },
+            { source: "f", target: "g" }
+        ]
+    };
+
+    const svg = d3.select("svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+    const simulation = d3.forceSimulation(dag.nodes)
+        .force("link", d3.forceLink(dag.links).id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(dag.links)
+        .enter().append("line")
+        .attr("class", "link");
+
+    const node = svg.append("g")
+        .attr("class", "nodes")
+        .selectAll("g")
+        .data(dag.nodes)
+        .enter().append("g");
+
+    node.append("circle")
+        .attr("r", 10)
+        .attr("fill", "#999");
+
+    node.append("text")
+        .attr("dy", -3)
+        .attr("text-anchor", "middle")
+        .text(d => d.id);
+
+    simulation.on("tick", () => {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        node
+            .attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+</script>
+</body>
+</html>
