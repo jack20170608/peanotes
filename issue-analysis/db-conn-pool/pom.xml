@@ -3,19 +3,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>top.ilovemyhome</groupId>
-        <artifactId>commons</artifactId>
-        <relativePath>../pom.xml</relativePath>
+        <artifactId>issue-analysis</artifactId>
         <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>top.ilovemyhome.commons</groupId>
-    <artifactId>bin</artifactId>
-    <version>${revision}</version>
-    <name>bin</name>
-    <description>The bin module for common server lifecycle scripts</description>
+    <groupId>top.ilovemyhome.issue.analysis</groupId>
+    <artifactId>db-conn-pool</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -23,7 +19,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!-- the dependency management section is used to define the versions of dependencies -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -39,9 +34,21 @@
 
     <dependencies>
         <dependency>
+            <groupId>top.ilovemyhome.commons</groupId>
+            <artifactId>common</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
     </dependencies>
 

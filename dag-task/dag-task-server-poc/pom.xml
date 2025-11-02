@@ -53,6 +53,10 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>org.duckdb</groupId>
+            <artifactId>duckdb_jdbc</artifactId>
+        </dependency>
+        <dependency>
             <groupId>top.ilovemyhome.commons</groupId>
             <artifactId>jdbi</artifactId>
             <version>${revision}</version>

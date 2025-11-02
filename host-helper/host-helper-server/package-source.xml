@@ -1,0 +1,34 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 https://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <id>source</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory/>
+            <fileMode>0644</fileMode>
+            <excludes>
+                <exclude>**/.git/**</exclude>
+                <exclude>**/.idea/**</exclude>
+                <exclude>${project.build.directory}/**</exclude>
+                <exclude>LOG_HOME_IS_UNDEFINED/**</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <filtered>true</filtered>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <outputDirectory/>
+            <includes>
+                <include>config/*.conf</include>
+                <include>config/*.properties</include>
+                <include>config/*.yml</include>
+            </includes>
+            <fileMode>0644</fileMode>
+        </fileSet>
+    </fileSets>
+</assembly>

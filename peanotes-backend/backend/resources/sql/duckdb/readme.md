@@ -105,7 +105,7 @@ D
 
 1. 简单的聚合查询，性能很强，时间划费不超过1s.
 ```shell
-D select customer_id, count(0), sum(value) from t_order group by customer_id;
+D select customer_id, count(0), sum(value) from t_order group by customer_id limit 10;
 ┌─────────────┬──────────┬───────────────────┐
 │ customer_id │ count(0) │   sum("value")    │
 │    int32    │  int64   │   decimal(38,3)   │
@@ -162,7 +162,8 @@ D
 
 2. 带条件的查询,性能基本没什么损失，不超过1s
 ```shell
-D select customer_id, count(0), sum(value) from t_order where price between 1 and 100  and value_date < '2025-05-01' group by customer_id;
+D select customer_id, count(0), sum(value) from t_order
+ where price between 1 and 100  and value_date < '2025-10-01' group by customer_id;
 ┌─────────────┬──────────┬───────────────┐
 │ customer_id │ count(0) │ sum("value")  │
 │    int32    │  int64   │ decimal(38,3) │

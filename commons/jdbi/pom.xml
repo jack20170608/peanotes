@@ -42,8 +42,8 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>provided</scope>
         </dependency>
-
         <!-- The 3rd party -->
         <dependency>
             <groupId>org.apache.commons</groupId>

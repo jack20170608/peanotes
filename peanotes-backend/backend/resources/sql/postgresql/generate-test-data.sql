@@ -44,18 +44,18 @@ create index idx_t_order_value_date on t_order(value_date);
 create index idx_t_order_price on t_order(price);
 create index idx_t_order_quality on t_order(quality);
 
-
+--Insert 1,0000,0000 data
 insert into t_order (sequence_no, customer_id, product_id, value_date, price,
                      quality, value, create_dt, last_update_dt)
 select gen_random_uuid()
      , RANDOM_INTEGER(1, 1000)
      , RANDOM_INTEGER(1, 10000)
-     , RANDOM_DATE('2000-01-01','2026-01-01')
+     , CURRENT_DATE + RANDOM_INTEGER(0, 1000)
      , round( cast( random() * 1000000 as numeric), 2)
      , cast(trunc(random() * 100000) as integer)
      , round( cast( random() * 100000000 as numeric), 2)
-     , RANDOM_TIMESTAMP('2020-01-01 00:00:00', '2026-01-01 00:00:00' )
-     , RANDOM_TIMESTAMP('2021-01-01 00:00:00', '2026-01-01 00:00:00' )
+     , NOW()
+     , NOW()
 from generate_series(1,10000000);
 
 

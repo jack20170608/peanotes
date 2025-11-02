@@ -21,7 +21,8 @@ CREATE TABLE t_order
 
 
 --Generate 1000w data in a sql, should be done in less than 10s
-insert into t_order (sequence_no, customer_id, product_id, value_date, price, quality, value, create_dt, last_update_dt)
+insert into t_order (sequence_no, customer_id, product_id, value_date
+                    , price, quality, value, create_dt, last_update_dt)
 select gen_random_uuid()
      ,  cast(trunc(random() * 1000) as integer)
      ,  cast(trunc(random() * 10000) as integer)
@@ -33,8 +34,9 @@ select gen_random_uuid()
      ,  current_localtimestamp()
 from range(1,10000001);
 
---Generate 1y data in a sql
-insert into t_order (sequence_no, customer_id, product_id, value_date, price, quality, value, create_dt, last_update_dt)
+--Generate 1000w data in a sql
+insert into t_order (sequence_no, customer_id, product_id, value_date
+         , price, quality, value, create_dt, last_update_dt)
 select gen_random_uuid()
      ,  cast(trunc(random() * 1000) as integer)
      ,  cast(trunc(random() * 10000) as integer)
