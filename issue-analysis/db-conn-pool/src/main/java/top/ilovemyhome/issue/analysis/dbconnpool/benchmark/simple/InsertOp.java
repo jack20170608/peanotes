@@ -1,10 +1,11 @@
-package top.ilovemyhome.issue.analysis.dbconnpool.common.operation;
+package top.ilovemyhome.issue.analysis.dbconnpool.benchmark.simple;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.issue.analysis.dbconnpool.common.BenchmarkTest;
 import top.ilovemyhome.issue.analysis.dbconnpool.common.SharedResources;
+import top.ilovemyhome.issue.analysis.dbconnpool.common.testsuite.AbstractTransactionOp;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,16 +13,15 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Objects;
 
-public class InsertOperation extends AbstractDbOperation{
+public class InsertOp extends AbstractTransactionOp {
 
-    public InsertOperation(BenchmarkTest benchmarkTest) {
+    public InsertOp(BenchmarkTest benchmarkTest) {
         super(benchmarkTest);
     }
 
     @Override
-    public int execute(Connection connection, boolean closeConnection) {
+    public void execute(Connection connection, boolean closeConnection) {
         Objects.requireNonNull( connection, "Connection cannot be null");
-        int result;
         long start = System.currentTimeMillis();
         String threadId = Thread.currentThread().getName();
         String data = "test_data_" + threadId + "_" + System.nanoTime();
@@ -41,20 +41,17 @@ public class InsertOperation extends AbstractDbOperation{
                 }
             }
             long time = System.currentTimeMillis() - start;
-            benchmarkTest.successInsert( time, 1);
-            result = 1;
+            benchmarkTest.getMonitor().commit(time);
             logger.info("Thread {} insert time: {} ms", threadId, time);
         }catch (Exception e) {
-            result = 0;
             logger.error("Error inserting data: ", e);
         }finally {
             if(closeConnection){
                 closeConnection(connection);
             }
         }
-        return result;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(InsertOperation.class);
+    private static final Logger logger = LoggerFactory.getLogger(InsertOp.class);
 
 }

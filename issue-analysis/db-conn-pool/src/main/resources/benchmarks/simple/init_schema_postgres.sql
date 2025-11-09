@@ -11,7 +11,3 @@ create table benchmark_test
   value      int          not null,
   created_at timestamp          default current_timestamp
 );
-
-insert benchmark_test(data, value)
-select trunc(random() * 10000) + 1
-from generate_series(1,10000);

@@ -1,9 +1,10 @@
-package top.ilovemyhome.issue.analysis.dbconnpool.common.operation;
+package top.ilovemyhome.issue.analysis.dbconnpool.benchmark.simple;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.issue.analysis.dbconnpool.common.BenchmarkTest;
 import top.ilovemyhome.issue.analysis.dbconnpool.common.SharedResources;
+import top.ilovemyhome.issue.analysis.dbconnpool.common.testsuite.AbstractTransactionOp;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,16 +12,15 @@ import java.util.Objects;
 
 import static top.ilovemyhome.issue.analysis.dbconnpool.common.SharedResources.getRandomId;
 
-public class DeleteOperation extends AbstractDbOperation{
+public class DeleteOp extends AbstractTransactionOp {
 
-    public DeleteOperation(BenchmarkTest benchmarkTest) {
+    public DeleteOp(BenchmarkTest benchmarkTest) {
         super(benchmarkTest);
     }
 
     @Override
-    public int execute(Connection connection, boolean closeConnection) {
+    public void execute(Connection connection, boolean closeConnection) {
         Objects.requireNonNull( connection, "Connection cannot be null");
-        int result;
         long start = System.currentTimeMillis();
         String threadId = Thread.currentThread().getName();
         try (PreparedStatement pstmt = connection.prepareStatement(
@@ -32,8 +32,7 @@ public class DeleteOperation extends AbstractDbOperation{
                 SharedResources.insertedIds.remove(id);
             }
             long time = System.currentTimeMillis() - start;
-            benchmarkTest.successDelete( time, 1);
-            result = 1;
+            benchmarkTest.getMonitor().commit(time);
             logger.info("Thread {} delete time: {} ms", threadId, time);
         }catch (Exception e) {
             logger.error("Error deleting data.");
@@ -43,9 +42,8 @@ public class DeleteOperation extends AbstractDbOperation{
                 closeConnection(connection);
             }
         }
-        return result;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(DeleteOperation.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeleteOp.class);
 
 }

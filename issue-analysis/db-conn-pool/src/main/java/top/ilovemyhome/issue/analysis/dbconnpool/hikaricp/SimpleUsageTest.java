@@ -2,8 +2,8 @@ package top.ilovemyhome.issue.analysis.dbconnpool.hikaricp;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import top.ilovemyhome.issue.analysis.dbconnpool.common.BenchmarkTest;
-import top.ilovemyhome.issue.analysis.dbconnpool.common.enums.OperationStrategy;
+import top.ilovemyhome.issue.analysis.dbconnpool.benchmark.BenchmarkTestImpl;
+import top.ilovemyhome.issue.analysis.dbconnpool.common.testsuite.TestSuite;
 
 import java.sql.SQLException;
 import java.util.logging.Logger;
@@ -13,12 +13,11 @@ public class SimpleUsageTest {
     public static void main(String[] args) {
         boolean autoCommit = true;
         HikariDataSource dataSource = initHikariDataSource(autoCommit);
-        var test = BenchmarkTest.builder()
+        var test = BenchmarkTestImpl.builder()
+            .withTestSuite(TestSuite.TPC_A)
             .withTransactionsPerThread(10)
-            .withOperationsPerTransaction(3)
             .withThreadCount(10)
-            .withAutoCommit(true)
-            .withOperationStrategy(OperationStrategy.ALL_RANDOM)
+            .withAutoCommit(false)
             .withConnectionSupplier(() -> {
                 try {
                     return dataSource.getConnection();
@@ -27,8 +26,8 @@ public class SimpleUsageTest {
                 }
             })
             .build();
-        test.run();
-        test.printResults();
+        test.initSchema();
+        test.initData();
     }
 
     private static HikariDataSource initHikariDataSource(boolean autoCommit) {

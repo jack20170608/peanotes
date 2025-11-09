@@ -1,27 +1,26 @@
-package top.ilovemyhome.issue.analysis.dbconnpool.common.operation;
+package top.ilovemyhome.issue.analysis.dbconnpool.benchmark.simple;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.issue.analysis.dbconnpool.common.BenchmarkTest;
+import top.ilovemyhome.issue.analysis.dbconnpool.common.testsuite.AbstractTransactionOp;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static top.ilovemyhome.issue.analysis.dbconnpool.common.SharedResources.getRandomId;
 
-public class UpdateOperation extends AbstractDbOperation {
+public class UpdateOp extends AbstractTransactionOp {
 
-    public UpdateOperation(BenchmarkTest benchmarkTest) {
+    public UpdateOp(BenchmarkTest benchmarkTest) {
         super(benchmarkTest);
     }
 
     @Override
-    public int execute(Connection connection, boolean closeConnection) {
+    public void execute(Connection connection, boolean closeConnection) {
         Objects.requireNonNull(connection, "Connection cannot be null");
-        int result;
         long start = System.currentTimeMillis();
         String threadId = Thread.currentThread().getName();
         String newData = "updated_data_" + threadId + "_" + System.nanoTime();
@@ -34,20 +33,17 @@ public class UpdateOperation extends AbstractDbOperation {
             pstmt.executeUpdate();
 
             long time = System.currentTimeMillis() - start;
-            benchmarkTest.successUpdate( time, 1);
-            result = 1;
+            benchmarkTest.getMonitor().commit(time);
             logger.info("Thread {} update time: {} ms", threadId, time);
-        }catch (Exception e) {
-            result = 0;
+        } catch (Exception e) {
             logger.error("Error updating data: ", e);
-        }finally {
-            if(closeConnection){
+        } finally {
+            if (closeConnection) {
                 closeConnection(connection);
             }
         }
-        return result;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(UpdateOperation.class);
+    private static final Logger logger = LoggerFactory.getLogger(UpdateOp.class);
 
 }
