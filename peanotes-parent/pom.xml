@@ -29,6 +29,7 @@
         <module>../commons</module>
         <module>../keepie</module>
         <module>../dag-task</module>
+        <module>../easy-benchmark</module>
         <module>../issue-analysis</module>
         <module>../host-helper</module>
         <module>../soy-security</module>

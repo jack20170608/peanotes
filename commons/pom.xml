@@ -22,9 +22,11 @@
         <module>common</module>
         <module>text</module>
         <module>httpclient</module>
+        <module>database</module>
         <module>jdbi</module>
         <module>muserver</module>
         <module>flyway-cli</module>
+        <module>swagger-ui</module>
     </modules>
 
     <properties>

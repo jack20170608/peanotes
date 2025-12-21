@@ -8,10 +8,11 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.ilovemyhome.commons.common.util.CollectionUtil;
+import top.ilovemyhome.commons.muserver.security.AppSecurityContext;
+import top.ilovemyhome.commons.muserver.security.authenticator.JwtAuthenticator;
+import top.ilovemyhome.commons.muserver.security.core.User;
 import top.ilovemyhome.tooling.hosthelper.application.AppContext;
 import top.ilovemyhome.tooling.hosthelper.domain.HostItem;
-import top.ilovemyhome.tooling.hosthelper.web.security.JwtAuthenticator;
-import top.ilovemyhome.tooling.hosthelper.web.security.User;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,8 +23,9 @@ public class LoginHandler implements RouteHandler {
     public LoginHandler(AppContext appContext) {
         this.env = appContext.getEnv();
         Objects.requireNonNull(env);
-        this.userPassAuthenticator = appContext.getBean("userPassAuthenticator", UserPassAuthenticator.class);
-        this.jwtAuthenticator = appContext.getBean("jwtAuthenticator", JwtAuthenticator.class);
+        AppSecurityContext appSecurityContext = appContext.getBean("appSecurityContext", AppSecurityContext.class);
+        this.userPassAuthenticators = appSecurityContext.getUserPassAuthenticators();
+        this.jwtAuthenticator = appSecurityContext.getJwtAuthenticator();
         this.hostItems = appContext.getHostItemMap().get(env);
         this.domains = appContext.getConfig().getStringList("cookie.domain");
         this.cookieName = appContext.getConfig().getString("cookie.name");
@@ -41,11 +43,14 @@ public class LoginHandler implements RouteHandler {
             String password = bodyJson.getString("password");
             String jwtResponseType = bodyJson.optString("jwtResponseType", "cookie");
             User user = null;
-            switch (this.env) {
-                case "local", "test", "dev", "sit" ->
-                    user = (User) userPassAuthenticator.authenticate(username, password);
-                case null, default ->
-                    throw new IllegalStateException("Unexpected value: " + this.env);
+            //Anyone of the authenticators can authenticate the user
+            for(UserPassAuthenticator authenticator : userPassAuthenticators){
+                if(Objects.nonNull(authenticator)){
+                    user = (User) authenticator.authenticate(username, password);
+                    if(Objects.nonNull(user)){
+                        break;
+                    }
+                }
             }
             if (Objects.isNull(user)) {
                 response.status(Response.Status.UNAUTHORIZED.getStatusCode());
@@ -125,7 +130,7 @@ public class LoginHandler implements RouteHandler {
         return cookies;
     }
 
-    private final UserPassAuthenticator userPassAuthenticator;
+    private final List<UserPassAuthenticator> userPassAuthenticators;
     private final JwtAuthenticator jwtAuthenticator;
     private final String env;
     private final List<HostItem> hostItems;

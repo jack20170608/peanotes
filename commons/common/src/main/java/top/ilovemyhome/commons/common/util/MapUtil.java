@@ -8,6 +8,14 @@ public final class MapUtil {
         // Utility class, prevent instantiation
     }
 
+    public static Map<String, String> toStringMap(Map<String, Object> map) {
+        return map.entrySet().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                Map.Entry::getKey,
+                e -> e.getValue().toString()
+            ));
+    }
+
     public static <K, V> String toString(Map<K, V> map) {
         if (map == null || map.isEmpty()) {
             return "{}";

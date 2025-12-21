@@ -3,20 +3,20 @@ package top.ilovemyhome.tooling.hosthelper.application;
 import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
-import io.muserver.rest.Authorizer;
-import io.muserver.rest.BasicAuthSecurityFilter;
-import io.muserver.rest.UserPassAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.ilovemyhome.commons.muserver.security.AppSecurityContext;
+import top.ilovemyhome.commons.muserver.security.core.CookieValueType;
+import top.ilovemyhome.commons.muserver.security.core.User;
 import top.ilovemyhome.tooling.hosthelper.domain.HostItem;
 import top.ilovemyhome.tooling.hosthelper.service.QueryService;
 import top.ilovemyhome.tooling.hosthelper.service.impl.QueryServiceImpl;
-import top.ilovemyhome.tooling.hosthelper.web.security.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -64,40 +64,18 @@ public final class AppContext {
             })
             .toList();
 
-
-        InMemoryUserPassAuthenticator userPassAuthenticator
-            = new InMemoryUserPassAuthenticator(users);
-
-        JwtAuthenticator jwtAuthenticator = new SimpleJwtAuthenticatorImpl(
-            config.getString("jwt.publicKeyLocation")
-            , config.getString("jwt.privateKeyLocation"));
-
-        Authorizer authorizer = new SimpleRoleAuthorizerImpl();
-        BasicAuthSecurityFilter basicAuthSecurityFilter = new BasicAuthSecurityFilter(
-            "/"
-            , userPassAuthenticator
-            , authorizer
-        );
-        JwtAuthSecurityFilter jwtAuthSecurityFilter = new JwtAuthSecurityFilter(
-            jwtAuthenticator
-            , authorizer
-            , config.getString("cookie.name")
-        );
-        ContainerRequestFilterFacet containerRequestFilterFacet = new ContainerRequestFilterFacet(
-            config.getStringList("security.whiteList")
-            , basicAuthSecurityFilter
-            , jwtAuthSecurityFilter
-        );
-        BEAN_NAME_FACTORY.put("jwtAuthenticator", jwtAuthenticator);
-        BEAN_FACTORY.put(JwtAuthenticator.class, jwtAuthenticator);
-        BEAN_NAME_FACTORY.put("userPassAuthenticator", userPassAuthenticator);
-        BEAN_FACTORY.put(UserPassAuthenticator.class, userPassAuthenticator);
-        BEAN_FACTORY.put(ContainerRequestFilterFacet.class, containerRequestFilterFacet);
-        BEAN_NAME_FACTORY.put("containerRequestFilterFacet", containerRequestFilterFacet);
-        BEAN_FACTORY.put(BasicAuthSecurityFilter.class, basicAuthSecurityFilter);
-        BEAN_NAME_FACTORY.put("basicAuthSecurityFilter", basicAuthSecurityFilter);
-        BEAN_FACTORY.put(JwtAuthSecurityFilter.class, jwtAuthSecurityFilter);
-        BEAN_NAME_FACTORY.put("jwtAuthSecurityFilter", jwtAuthSecurityFilter);
+        AppSecurityContext appSecurityContext = AppSecurityContext.builder()
+            .inMemoryUser(users)
+            .jwtIssuer(getApplicationName())
+            .jwtSubject("access")
+            .jwtTtl(config.getDuration("jwt.ttl", TimeUnit.MILLISECONDS))
+            .jwtPublicKeyPath(config.getString("jwt.publicKeyLocation"))
+            .jwtPrivateKeyPath(config.getString("jwt.privateKeyLocation"))
+            .cookieName(config.getString("cookie.name"))
+            .cookieValueType(config.getEnum(CookieValueType.class, "cookie.valueType"))
+            .build();
+        BEAN_NAME_FACTORY.put("appSecurityContext", appSecurityContext);
+        BEAN_FACTORY.put(AppSecurityContext.class, appSecurityContext);
     }
 
     private void initHostMap() {

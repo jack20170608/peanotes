@@ -24,11 +24,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.ilovemyhome.commons.muserver.security.AppSecurityContext;
 import top.ilovemyhome.tooling.hosthelper.interfaces.api.FooUserHandler;
 import top.ilovemyhome.tooling.hosthelper.interfaces.api.QueryHandler;
 import top.ilovemyhome.tooling.hosthelper.interfaces.api.SecurityHandler;
 import top.ilovemyhome.tooling.hosthelper.web.LoginHandler;
-import top.ilovemyhome.tooling.hosthelper.web.security.ContainerRequestFilterFacet;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -52,33 +52,35 @@ public class WebServerBootstrap {
         Config config = appContext.getConfig();
         String contextPath = config.getString("server.contextPath");
         int port = config.getInt("server.port");
-        LOGGER.info("Start mu server on port: {}.", port);
+        logger.info("Start mu server on port: {}.", port);
         long start = System.currentTimeMillis();
-
+        AppSecurityContext appSecurityContext = appContext.getBean("appSecurityContext", AppSecurityContext.class);
         MuServerBuilder muServerBuilder = MuServerBuilder.httpServer()
             .withHttpPort(port)
             .addResponseCompleteListener(info -> {
                 MuRequest req = info.request();
                 MuResponse resp = info.response();
-                LOGGER.info("Response completed: success={}, remoteAddr={}, clientAddress={}, req={}, status={}, duration={}."
+                logger.info("Response completed: success={}, remoteAddr={}, clientAddress={}, req={}, status={}, duration={}."
                     , info.completedSuccessfully(), req.remoteAddress(), req.clientIP(), req, resp.status(), info.duration());
             })
             .withIdleTimeout(30, TimeUnit.MINUTES)
             .withMaxRequestSize(300_000_000) //300MB
             .addHandler(Method.GET, "/", (req, res, map) -> res.redirect("/" + contextPath + "/index.html"))
+            .addHandler(Method.GET, "/index.html", (req, res, map) -> res.redirect("/" + contextPath + "/index.html"))
             .addHandler(Method.POST, "/login", new LoginHandler(appContext))
             .addHandler(context(contextPath)
+                .addHandler(Method.GET, "/", (req, res, map) -> res.redirect("/" + contextPath + "/index.html"))
                 .addHandler(new SecurityHandler(appContext))
                 .addHandler(ResourceHandlerBuilder.classpathHandler("/static"))
                 .addHandler(createRestHandler(appContext)
-                    .addRequestFilter(appContext.getBean("containerRequestFilterFacet", ContainerRequestFilterFacet.class)))
+                    .addRequestFilter(appSecurityContext.getFacetFilter()))
             );
 
         MuServer muServer = muServerBuilder.start();
-        LOGGER.info("Mu server started in {} ms.", System.currentTimeMillis() - start);
-        LOGGER.info("Started app at {}.", muServer.uri().resolve("/" + contextPath));
-        LOGGER.info("api.html at {}.", muServer.uri().resolve("/" + contextPath + "/api.html"));
-        LOGGER.info("openapi.json at {}.", muServer.uri().resolve("/" + contextPath + "/openapi.json"));
+        logger.info("Mu server started in {} ms.", System.currentTimeMillis() - start);
+        logger.info("Started app at {}.", muServer.uri().resolve("/" + contextPath));
+        logger.info("api.html at {}.", muServer.uri().resolve("/" + contextPath + "/api.html"));
+        logger.info("openapi.json at {}.", muServer.uri().resolve("/" + contextPath + "/openapi.json"));
         return muServer;
     }
 
@@ -144,5 +146,5 @@ public class WebServerBootstrap {
             );
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebServerBootstrap.class);
+    private static final Logger logger = LoggerFactory.getLogger(WebServerBootstrap.class);
 }
